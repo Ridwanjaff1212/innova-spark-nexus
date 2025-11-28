@@ -131,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInAsAdmin = async (email: string, password: string, pin: string) => {
     if (pin !== "TECHNO2025") {
-      return { error: { message: "Invalid admin PIN" } };
+      return { error: { message: "Invalid admin PIN 🔐" } };
     }
 
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -152,6 +152,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: "admin",
         });
       }
+      
+      // Immediately set admin status
+      setIsAdmin(true);
+      
+      // Also fetch profile
+      await fetchProfile(data.user.id);
     }
 
     return { error };
