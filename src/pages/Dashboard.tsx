@@ -12,10 +12,13 @@ import {
   TrendingUp,
   Zap,
   Target,
-  Award
+  Award,
+  FileText,
+  Rocket
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { exportUserProgressReport } from "@/utils/pdfExport";
 
 interface Stats {
   totalProjects: number;
