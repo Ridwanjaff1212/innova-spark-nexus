@@ -44,6 +44,48 @@ export type Database = {
         }
         Relationships: []
       }
+      assignments: {
+        Row: {
+          assigned_to: string[] | null
+          assigned_to_all: boolean | null
+          created_at: string | null
+          created_by: string | null
+          deadline: string | null
+          description: string | null
+          id: string
+          priority: string | null
+          status: string | null
+          title: string
+          type: string | null
+        }
+        Insert: {
+          assigned_to?: string[] | null
+          assigned_to_all?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          priority?: string | null
+          status?: string | null
+          title: string
+          type?: string | null
+        }
+        Update: {
+          assigned_to?: string[] | null
+          assigned_to_all?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          priority?: string | null
+          status?: string | null
+          title?: string
+          type?: string | null
+        }
+        Relationships: []
+      }
       badges: {
         Row: {
           category: string | null
