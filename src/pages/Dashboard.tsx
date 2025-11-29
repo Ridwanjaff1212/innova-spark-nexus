@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { exportUserProgressReport } from "@/utils/pdfExport";
+import StudentAssignments from "@/components/StudentAssignments";
 
 interface Stats {
   totalProjects: number;
@@ -40,7 +41,6 @@ export default function Dashboard() {
   const [quote, setQuote] = useState(INSPIRATIONAL_QUOTES[0]);
 
   useEffect(() => {
-    // Random quote
     const randomQuote = INSPIRATIONAL_QUOTES[Math.floor(Math.random() * INSPIRATIONAL_QUOTES.length)];
     setQuote(randomQuote);
 
@@ -84,7 +84,7 @@ export default function Dashboard() {
       .eq("is_featured", true)
       .eq("status", "approved")
       .limit(1)
-      .single();
+      .maybeSingle();
     setFeaturedProject(data);
   };
 
@@ -188,13 +188,22 @@ export default function Dashboard() {
         ))}
       </div>
 
+      {/* Assignments Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+      >
+        <StudentAssignments />
+      </motion.div>
+
       {/* Main Content Grid */}
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Announcements */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.6 }}
           className="lg:col-span-2 glass-card p-6"
         >
           <div className="flex items-center justify-between mb-4">
@@ -214,7 +223,7 @@ export default function Dashboard() {
                   key={announcement.id}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.6 + index * 0.1 }}
+                  transition={{ delay: 0.7 + index * 0.1 }}
                   className="p-4 rounded-xl bg-muted/50 hover:bg-muted/80 transition-colors"
                 >
                   <div className="flex items-start justify-between">
@@ -229,8 +238,9 @@ export default function Dashboard() {
                     )}
                   </div>
                   {announcement.event_date && (
-                    <p className="text-xs text-primary mt-2">
-                      📅 {new Date(announcement.event_date).toLocaleDateString()}
+                    <p className="text-xs text-primary mt-2 flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {new Date(announcement.event_date).toLocaleDateString()}
                     </p>
                   )}
                 </motion.div>
@@ -248,7 +258,7 @@ export default function Dashboard() {
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.6 }}
+          transition={{ delay: 0.7 }}
           className="glass-card p-6"
         >
           <h3 className="text-xl font-display font-semibold flex items-center gap-2 mb-4">
@@ -293,7 +303,7 @@ export default function Dashboard() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.7 }}
+        transition={{ delay: 0.8 }}
         className="grid grid-cols-2 md:grid-cols-4 gap-4"
       >
         <Link to="/projects/new" className="glass-card p-4 hover-lift text-center">

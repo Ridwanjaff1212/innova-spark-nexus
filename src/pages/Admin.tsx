@@ -109,7 +109,11 @@ export default function Admin() {
       toast.error("Please enter a title");
       return;
     }
-    await supabase.from("assignments").insert({
+    
+    setLoading(true);
+    
+    // Insert assignment
+    const { error } = await supabase.from("assignments").insert({
       title: newAssignment.title,
       description: newAssignment.description,
       type: newAssignment.type,
@@ -118,9 +122,50 @@ export default function Admin() {
       assigned_to_all: newAssignment.assigned_to_all,
       assigned_to: newAssignment.assigned_to_all ? [] : selectedMembers
     });
-    toast.success("Assignment sent to students");
+
+    if (error) {
+      toast.error("Failed to create assignment");
+      setLoading(false);
+      return;
+    }
+
+    // Send email notifications
+    const recipientEmails = newAssignment.assigned_to_all 
+      ? members.map(m => m.email).filter(Boolean)
+      : members.filter(m => selectedMembers.includes(m.user_id)).map(m => m.email).filter(Boolean);
+
+    if (recipientEmails.length > 0) {
+      try {
+        const { data, error: emailError } = await supabase.functions.invoke("send-assignment-email", {
+          body: {
+            assignment: {
+              title: newAssignment.title,
+              description: newAssignment.description,
+              type: newAssignment.type,
+              priority: newAssignment.priority,
+              deadline: newAssignment.deadline || null,
+            },
+            recipientEmails,
+          },
+        });
+
+        if (emailError) {
+          console.error("Email error:", emailError);
+          toast.success("Assignment created (emails may have failed)");
+        } else {
+          toast.success(`Assignment sent to ${data?.sent || recipientEmails.length} students`);
+        }
+      } catch (err) {
+        console.error("Email notification error:", err);
+        toast.success("Assignment created (email notifications skipped)");
+      }
+    } else {
+      toast.success("Assignment created");
+    }
+
     setNewAssignment({ title: "", description: "", type: "task", priority: "normal", deadline: "", assigned_to_all: true, assigned_to: [] });
     setSelectedMembers([]);
+    setLoading(false);
     fetchAllData();
   };
 
