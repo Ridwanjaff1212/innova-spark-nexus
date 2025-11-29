@@ -44,6 +44,38 @@ export type Database = {
         }
         Relationships: []
       }
+      assignment_completions: {
+        Row: {
+          assignment_id: string
+          completed_at: string | null
+          id: string
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          assignment_id: string
+          completed_at?: string | null
+          id?: string
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          assignment_id?: string
+          completed_at?: string | null
+          id?: string
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assignment_completions_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assignments: {
         Row: {
           assigned_to: string[] | null
