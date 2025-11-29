@@ -8,11 +8,25 @@ import { toast } from "sonner";
 import { 
   Shield, Users, FolderKanban, Calendar, CheckCircle, Star, Plus, Trash2, Download, 
   FileText, TrendingUp, Award, Zap, BarChart3, RefreshCw, Eye, Clock, Activity,
-  UserCheck, Settings, Database, Bell, Search, Layers, ArrowUpRight
+  UserCheck, Settings, Database, Bell, Search, Layers, ArrowUpRight, Send, Target,
+  AlertCircle, GraduationCap, Mail, Hash, Edit2, ChevronDown, ChevronUp
 } from "lucide-react";
 import { exportMembersReport, exportProjectsReport } from "@/utils/pdfExport";
 
-type TabType = "overview" | "projects" | "members" | "announcements" | "analytics";
+type TabType = "overview" | "projects" | "members" | "assignments" | "announcements" | "analytics";
+
+interface Assignment {
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  priority: string;
+  deadline: string | null;
+  assigned_to: string[];
+  assigned_to_all: boolean;
+  status: string;
+  created_at: string;
+}
 
 export default function Admin() {
   const { isAdmin } = useAuth();
@@ -20,9 +34,16 @@ export default function Admin() {
   const [projects, setProjects] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
   const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [newAnnouncement, setNewAnnouncement] = useState({ title: "", content: "", event_date: "", is_competition: false });
+  const [newAssignment, setNewAssignment] = useState({ 
+    title: "", description: "", type: "task", priority: "normal", 
+    deadline: "", assigned_to_all: true, assigned_to: [] as string[] 
+  });
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [expandedMember, setExpandedMember] = useState<string | null>(null);
+  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
 
   useEffect(() => { 
     fetchAllData();
@@ -30,14 +51,16 @@ export default function Admin() {
 
   const fetchAllData = async () => {
     setLoading(true);
-    const [projectsRes, membersRes, announcementsRes] = await Promise.all([
+    const [projectsRes, membersRes, announcementsRes, assignmentsRes] = await Promise.all([
       supabase.from("projects").select("*").order("created_at", { ascending: false }),
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
-      supabase.from("announcements").select("*").order("created_at", { ascending: false })
+      supabase.from("announcements").select("*").order("created_at", { ascending: false }),
+      supabase.from("assignments").select("*").order("created_at", { ascending: false })
     ]);
     setProjects(projectsRes.data || []);
     setMembers(membersRes.data || []);
     setAnnouncements(announcementsRes.data || []);
+    setAssignments((assignmentsRes.data as Assignment[]) || []);
     setLoading(false);
   };
 
@@ -81,6 +104,32 @@ export default function Admin() {
     fetchAllData();
   };
 
+  const createAssignment = async () => {
+    if (!newAssignment.title) {
+      toast.error("Please enter a title");
+      return;
+    }
+    await supabase.from("assignments").insert({
+      title: newAssignment.title,
+      description: newAssignment.description,
+      type: newAssignment.type,
+      priority: newAssignment.priority,
+      deadline: newAssignment.deadline || null,
+      assigned_to_all: newAssignment.assigned_to_all,
+      assigned_to: newAssignment.assigned_to_all ? [] : selectedMembers
+    });
+    toast.success("Assignment sent to students");
+    setNewAssignment({ title: "", description: "", type: "task", priority: "normal", deadline: "", assigned_to_all: true, assigned_to: [] });
+    setSelectedMembers([]);
+    fetchAllData();
+  };
+
+  const deleteAssignment = async (id: string) => {
+    await supabase.from("assignments").delete().eq("id", id);
+    toast.success("Assignment deleted");
+    fetchAllData();
+  };
+
   const exportCSV = (data: any[], filename: string) => {
     if (data.length === 0) {
       toast.error("No data to export");
@@ -103,6 +152,7 @@ export default function Admin() {
     activeMembers: members.filter(m => (m.xp_points || 0) > 0).length,
     totalXP: members.reduce((sum, m) => sum + (m.xp_points || 0), 0),
     avgLevel: members.length > 0 ? (members.reduce((sum, m) => sum + (m.level || 1), 0) / members.length).toFixed(1) : 0,
+    activeAssignments: assignments.filter(a => a.status === "active").length,
   };
 
   const filteredProjects = projects.filter(p => 
@@ -112,8 +162,11 @@ export default function Admin() {
 
   const filteredMembers = members.filter(m => 
     m.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    m.technovista_id?.toLowerCase().includes(searchTerm.toLowerCase())
+    m.technovista_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    m.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const getMemberProjects = (userId: string) => projects.filter(p => p.user_id === userId);
 
   if (!isAdmin) {
     return (
@@ -137,8 +190,25 @@ export default function Admin() {
     { id: "overview" as TabType, label: "Overview", icon: BarChart3 },
     { id: "projects" as TabType, label: "Projects", icon: FolderKanban },
     { id: "members" as TabType, label: "Members", icon: Users },
+    { id: "assignments" as TabType, label: "Assignments", icon: Send },
     { id: "announcements" as TabType, label: "Announcements", icon: Bell },
     { id: "analytics" as TabType, label: "Analytics", icon: Layers },
+  ];
+
+  const assignmentTypes = [
+    { value: "task", label: "Task" },
+    { value: "tech_news", label: "Tech News" },
+    { value: "research", label: "Research" },
+    { value: "presentation", label: "Presentation" },
+    { value: "project", label: "Project Work" },
+    { value: "workshop", label: "Workshop Prep" },
+  ];
+
+  const priorityLevels = [
+    { value: "low", label: "Low", color: "text-blue-600 bg-blue-100" },
+    { value: "normal", label: "Normal", color: "text-green-600 bg-green-100" },
+    { value: "high", label: "High", color: "text-amber-600 bg-amber-100" },
+    { value: "urgent", label: "Urgent", color: "text-red-600 bg-red-100" },
   ];
 
   return (
@@ -171,12 +241,12 @@ export default function Admin() {
 
       <div className="max-w-7xl mx-auto px-6 py-6">
         {/* Navigation Tabs */}
-        <nav className="flex gap-1 p-1 bg-muted/50 rounded-lg mb-6 w-fit">
+        <nav className="flex gap-1 p-1 bg-muted/50 rounded-lg mb-6 w-fit overflow-x-auto">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all whitespace-nowrap ${
                 activeTab === tab.id 
                   ? "bg-background text-foreground shadow-sm" 
                   : "text-muted-foreground hover:text-foreground"
@@ -204,7 +274,7 @@ export default function Admin() {
                   { label: "Total Projects", value: stats.totalProjects, icon: FolderKanban, trend: "+12%", up: true },
                   { label: "Pending Review", value: stats.pendingProjects, icon: Clock, trend: stats.pendingProjects > 0 ? "Action needed" : "All clear", up: false },
                   { label: "Total Members", value: stats.totalMembers, icon: Users, trend: "+8%", up: true },
-                  { label: "Active Members", value: stats.activeMembers, icon: UserCheck, trend: `${Math.round((stats.activeMembers / (stats.totalMembers || 1)) * 100)}%`, up: true },
+                  { label: "Active Assignments", value: stats.activeAssignments, icon: Send, trend: "Active", up: true },
                 ].map((stat, i) => (
                   <motion.div
                     key={stat.label}
@@ -267,8 +337,8 @@ export default function Admin() {
                         </span>
                       )}
                     </Button>
-                    <Button variant="outline" className="w-full justify-start" size="sm" onClick={() => setActiveTab("announcements")}>
-                      <Plus className="w-4 h-4 mr-2" /> New Announcement
+                    <Button variant="outline" className="w-full justify-start" size="sm" onClick={() => setActiveTab("assignments")}>
+                      <Send className="w-4 h-4 mr-2" /> Send Assignment
                     </Button>
                     <Button variant="outline" className="w-full justify-start" size="sm" onClick={() => exportMembersReport(members)}>
                       <FileText className="w-4 h-4 mr-2" /> Export Report
@@ -419,7 +489,7 @@ export default function Admin() {
             </motion.div>
           )}
 
-          {/* Members Tab */}
+          {/* Members Tab - Enhanced */}
           {activeTab === "members" && (
             <motion.div 
               key="members"
@@ -432,7 +502,7 @@ export default function Admin() {
                 <div className="relative flex-1 max-w-md">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input 
-                    placeholder="Search members..." 
+                    placeholder="Search by name, ID, or email..." 
                     className="pl-10"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -447,62 +517,323 @@ export default function Admin() {
                   </Button>
                 </div>
               </div>
+
+              {/* Member Stats Summary */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="bg-card border border-border rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                    <Users className="w-4 h-4" />
+                    Total Members
+                  </div>
+                  <p className="text-2xl font-bold mt-1">{stats.totalMembers}</p>
+                </div>
+                <div className="bg-card border border-border rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                    <UserCheck className="w-4 h-4" />
+                    Active Members
+                  </div>
+                  <p className="text-2xl font-bold mt-1">{stats.activeMembers}</p>
+                </div>
+                <div className="bg-card border border-border rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                    <Zap className="w-4 h-4" />
+                    Total XP
+                  </div>
+                  <p className="text-2xl font-bold mt-1">{stats.totalXP.toLocaleString()}</p>
+                </div>
+                <div className="bg-card border border-border rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                    <TrendingUp className="w-4 h-4" />
+                    Avg Level
+                  </div>
+                  <p className="text-2xl font-bold mt-1">{stats.avgLevel}</p>
+                </div>
+              </div>
               
-              <div className="bg-card border border-border rounded-xl overflow-hidden">
-                <table className="w-full">
-                  <thead className="bg-muted/50 border-b border-border">
-                    <tr>
-                      <th className="p-4 text-left text-sm font-medium text-muted-foreground">Member</th>
-                      <th className="p-4 text-left text-sm font-medium text-muted-foreground">ID</th>
-                      <th className="p-4 text-left text-sm font-medium text-muted-foreground">Grade</th>
-                      <th className="p-4 text-left text-sm font-medium text-muted-foreground">XP</th>
-                      <th className="p-4 text-left text-sm font-medium text-muted-foreground">Level</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredMembers.length === 0 ? (
-                      <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No members found</td></tr>
-                    ) : (
-                      filteredMembers.map((m) => (
-                        <tr key={m.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                          <td className="p-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                                <span className="text-sm font-semibold text-primary">
+              {/* Members List - Card Style */}
+              <div className="space-y-3">
+                {filteredMembers.length === 0 ? (
+                  <div className="bg-card border border-border rounded-xl p-8 text-center text-muted-foreground">
+                    No members found
+                  </div>
+                ) : (
+                  filteredMembers.map((m) => {
+                    const memberProjects = getMemberProjects(m.user_id);
+                    const isExpanded = expandedMember === m.id;
+                    
+                    return (
+                      <div key={m.id} className="bg-card border border-border rounded-xl overflow-hidden">
+                        <div 
+                          className="p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+                          onClick={() => setExpandedMember(isExpanded ? null : m.id)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center border-2 border-primary/20">
+                                <span className="text-lg font-semibold text-primary">
                                   {m.full_name?.charAt(0) || "?"}
                                 </span>
                               </div>
                               <div>
-                                <p className="font-medium">{m.full_name}</p>
-                                <p className="text-xs text-muted-foreground">{m.email}</p>
+                                <h4 className="font-semibold flex items-center gap-2">
+                                  {m.full_name}
+                                  {(m.xp_points || 0) >= 500 && (
+                                    <Award className="w-4 h-4 text-amber-500" />
+                                  )}
+                                </h4>
+                                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                                  <span className="flex items-center gap-1">
+                                    <Hash className="w-3 h-3" />
+                                    {m.technovista_id || "N/A"}
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    <Mail className="w-3 h-3" />
+                                    {m.email}
+                                  </span>
+                                </div>
                               </div>
                             </div>
-                          </td>
-                          <td className="p-4">
-                            <code className="text-sm text-primary bg-primary/10 px-2 py-1 rounded">
-                              {m.technovista_id || "N/A"}
-                            </code>
-                          </td>
-                          <td className="p-4 text-sm text-muted-foreground">
-                            {m.grade || "N/A"} {m.section || ""}
-                          </td>
-                          <td className="p-4">
-                            <div className="flex items-center gap-2">
-                              <Zap className="w-4 h-4 text-primary" />
-                              <span className="font-semibold">{m.xp_points || 0}</span>
+                            
+                            <div className="flex items-center gap-6">
+                              <div className="text-right hidden md:block">
+                                <div className="flex items-center gap-1 text-sm">
+                                  <GraduationCap className="w-4 h-4 text-muted-foreground" />
+                                  <span>{m.grade || "N/A"} {m.section || ""}</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-4">
+                                <div className="text-center">
+                                  <div className="flex items-center gap-1 text-primary font-semibold">
+                                    <Zap className="w-4 h-4" />
+                                    {m.xp_points || 0}
+                                  </div>
+                                  <span className="text-xs text-muted-foreground">XP</span>
+                                </div>
+                                <div className="text-center">
+                                  <div className="font-semibold">Lv.{m.level || 1}</div>
+                                  <span className="text-xs text-muted-foreground">Level</span>
+                                </div>
+                                <div className="text-center">
+                                  <div className="font-semibold">{memberProjects.length}</div>
+                                  <span className="text-xs text-muted-foreground">Projects</span>
+                                </div>
+                              </div>
+                              {isExpanded ? (
+                                <ChevronUp className="w-5 h-5 text-muted-foreground" />
+                              ) : (
+                                <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                              )}
                             </div>
-                          </td>
-                          <td className="p-4">
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                              <TrendingUp className="w-3 h-3" />
-                              Level {m.level || 1}
-                            </span>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+                          </div>
+                        </div>
+                        
+                        {/* Expanded Details */}
+                        <AnimatePresence>
+                          {isExpanded && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="border-t border-border bg-muted/20"
+                            >
+                              <div className="p-4 grid md:grid-cols-2 gap-4">
+                                <div>
+                                  <h5 className="font-medium mb-3 flex items-center gap-2">
+                                    <FolderKanban className="w-4 h-4 text-primary" />
+                                    Projects ({memberProjects.length})
+                                  </h5>
+                                  {memberProjects.length === 0 ? (
+                                    <p className="text-sm text-muted-foreground">No projects submitted yet</p>
+                                  ) : (
+                                    <div className="space-y-2">
+                                      {memberProjects.map(p => (
+                                        <div key={p.id} className="flex items-center justify-between p-2 bg-background rounded-lg">
+                                          <span className="text-sm font-medium">{p.title}</span>
+                                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                            p.status === "approved" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+                                          }`}>
+                                            {p.status || "Pending"}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                                <div>
+                                  <h5 className="font-medium mb-3 flex items-center gap-2">
+                                    <Target className="w-4 h-4 text-primary" />
+                                    Member Details
+                                  </h5>
+                                  <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between p-2 bg-background rounded-lg">
+                                      <span className="text-muted-foreground">Joined</span>
+                                      <span>{new Date(m.created_at).toLocaleDateString()}</span>
+                                    </div>
+                                    <div className="flex justify-between p-2 bg-background rounded-lg">
+                                      <span className="text-muted-foreground">Bio</span>
+                                      <span className="text-right max-w-[200px] truncate">{m.bio || "No bio"}</span>
+                                    </div>
+                                    <div className="flex justify-between p-2 bg-background rounded-lg">
+                                      <span className="text-muted-foreground">User ID</span>
+                                      <code className="text-xs bg-muted px-1 rounded">{m.user_id?.slice(0, 8)}...</code>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </motion.div>
+          )}
+
+          {/* Assignments Tab - NEW */}
+          {activeTab === "assignments" && (
+            <motion.div 
+              key="assignments"
+              initial={{ opacity: 0, y: 10 }} 
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-6"
+            >
+              {/* Create Assignment */}
+              <div className="bg-card border border-border rounded-xl p-6">
+                <h3 className="font-display font-semibold mb-4 flex items-center gap-2">
+                  <Send className="w-5 h-5 text-primary" />
+                  Send New Assignment
+                </h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <Input 
+                    placeholder="Assignment Title (e.g., Tech News: AI Developments)" 
+                    value={newAssignment.title} 
+                    onChange={(e) => setNewAssignment({ ...newAssignment, title: e.target.value })} 
+                  />
+                  <Input 
+                    type="date" 
+                    placeholder="Deadline"
+                    value={newAssignment.deadline} 
+                    onChange={(e) => setNewAssignment({ ...newAssignment, deadline: e.target.value })} 
+                  />
+                  <select
+                    value={newAssignment.type}
+                    onChange={(e) => setNewAssignment({ ...newAssignment, type: e.target.value })}
+                    className="rounded-lg border border-input bg-background px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                  >
+                    {assignmentTypes.map(t => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={newAssignment.priority}
+                    onChange={(e) => setNewAssignment({ ...newAssignment, priority: e.target.value })}
+                    className="rounded-lg border border-input bg-background px-4 py-2 text-sm focus:ring-2 focus:ring-primary/20 outline-none"
+                  >
+                    {priorityLevels.map(p => (
+                      <option key={p.value} value={p.value}>{p.label}</option>
+                    ))}
+                  </select>
+                  <textarea 
+                    placeholder="Assignment description and instructions..." 
+                    value={newAssignment.description} 
+                    onChange={(e) => setNewAssignment({ ...newAssignment, description: e.target.value })} 
+                    className="md:col-span-2 rounded-lg border border-input bg-background px-4 py-3 min-h-[100px] focus:ring-2 focus:ring-primary/20 outline-none resize-none" 
+                  />
+                  <div className="md:col-span-2 flex items-center justify-between">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={newAssignment.assigned_to_all} 
+                        onChange={(e) => setNewAssignment({ ...newAssignment, assigned_to_all: e.target.checked })}
+                        className="w-4 h-4 rounded border-input accent-primary" 
+                      /> 
+                      <span className="text-sm">Assign to all members</span>
+                    </label>
+                    <Button onClick={createAssignment}>
+                      <Send className="w-4 h-4 mr-2" /> Send Assignment
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Assignment Types Info */}
+              <div className="grid md:grid-cols-3 gap-4">
+                {[
+                  { type: "Tech News", desc: "Share latest tech articles for students to research", icon: Target },
+                  { type: "Research", desc: "Assign topics for in-depth exploration", icon: Search },
+                  { type: "Project Work", desc: "Assign specific project milestones", icon: FolderKanban },
+                ].map((item) => (
+                  <div key={item.type} className="bg-card border border-border rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <item.icon className="w-4 h-4 text-primary" />
+                      <span className="font-medium">{item.type}</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Existing Assignments */}
+              <div className="space-y-3">
+                <h3 className="font-display font-semibold flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-primary" />
+                  Active Assignments ({assignments.length})
+                </h3>
+                {assignments.length === 0 ? (
+                  <div className="bg-card border border-border rounded-xl p-8 text-center text-muted-foreground">
+                    No assignments created yet
+                  </div>
+                ) : (
+                  assignments.map((a) => {
+                    const priority = priorityLevels.find(p => p.value === a.priority);
+                    const type = assignmentTypes.find(t => t.value === a.type);
+                    return (
+                      <div key={a.id} className="bg-card border border-border rounded-xl p-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex gap-4 flex-1">
+                            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                              <Send className="w-5 h-5 text-primary" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h4 className="font-medium">{a.title}</h4>
+                                <span className={`text-xs px-2 py-0.5 rounded-full ${priority?.color || "bg-muted"}`}>
+                                  {priority?.label || a.priority}
+                                </span>
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                                  {type?.label || a.type}
+                                </span>
+                              </div>
+                              <p className="text-sm text-muted-foreground mt-1">{a.description}</p>
+                              <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Users className="w-3 h-3" />
+                                  {a.assigned_to_all ? "All members" : `${a.assigned_to?.length || 0} members`}
+                                </span>
+                                {a.deadline && (
+                                  <span className="flex items-center gap-1">
+                                    <Calendar className="w-3 h-3" />
+                                    Due: {new Date(a.deadline).toLocaleDateString()}
+                                  </span>
+                                )}
+                                <span className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  Created: {new Date(a.created_at).toLocaleDateString()}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <Button size="sm" variant="ghost" onClick={() => deleteAssignment(a.id)}>
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </motion.div>
           )}
