@@ -1,19 +1,22 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { 
-  Bot, Send, Sparkles, Loader2, Upload, Code, FileText, 
-  Zap, Brain, Cpu, MessageSquare, Trash2, Copy, Check,
-  FileCode, Image as ImageIcon, File
+  Send, Sparkles, Loader2, Upload, Code, FileText, 
+  Brain, Cpu, MessageSquare, Trash2, Copy, Check,
+  FileCode, Image as ImageIcon, File, Wand2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import Avatar3D from "@/components/ai/Avatar3D";
+import VoiceInput from "@/components/ai/VoiceInput";
+import ImageGenerator from "@/components/ai/ImageGenerator";
 
 type Message = { 
   role: "user" | "assistant"; 
   content: string;
   attachments?: { name: string; type: string; content: string }[];
+  imageUrl?: string;
 };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`;
@@ -21,10 +24,11 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`;
 export default function AIAssistant() {
   const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([
-    { role: "assistant", content: "Hello! 👋 I'm **TechnoBot**, your advanced AI assistant powered by cutting-edge technology. I can help you with:\n\n🚀 **Tech Projects** - Get guidance on your innovations\n💻 **Code Review** - Upload code for analysis\n📁 **File Analysis** - Share files for insights\n💡 **Brainstorming** - Generate creative ideas\n\nHow can I assist you today?" }
+    { role: "assistant", content: "Hello! 👋 I'm **TechnoBot**, your advanced AI assistant powered by cutting-edge technology. I can help you with:\n\n🚀 **Tech Projects** - Get guidance on your innovations\n💻 **Code Review** - Upload code for analysis\n🎨 **Image Generation** - Create AI art with Gemini\n🎤 **Voice Input** - Talk to me directly\n💡 **Brainstorming** - Generate creative ideas\n\nHow can I assist you today?" }
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [attachments, setAttachments] = useState<{ name: string; type: string; content: string }[]>([]);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -47,20 +51,11 @@ export default function AIAssistant() {
       const reader = new FileReader();
       reader.onload = () => {
         const content = reader.result as string;
-        setAttachments(prev => [...prev, {
-          name: file.name,
-          type: file.type || "text/plain",
-          content: content
-        }]);
+        setAttachments(prev => [...prev, { name: file.name, type: file.type || "text/plain", content }]);
       };
 
       if (file.type.startsWith("text/") || 
-          file.name.endsWith(".js") || file.name.endsWith(".ts") || 
-          file.name.endsWith(".jsx") || file.name.endsWith(".tsx") ||
-          file.name.endsWith(".py") || file.name.endsWith(".java") ||
-          file.name.endsWith(".cpp") || file.name.endsWith(".c") ||
-          file.name.endsWith(".html") || file.name.endsWith(".css") ||
-          file.name.endsWith(".json") || file.name.endsWith(".md")) {
+          file.name.match(/\.(js|ts|jsx|tsx|py|java|cpp|c|html|css|json|md)$/)) {
         reader.readAsText(file);
       } else {
         reader.readAsDataURL(file);
@@ -78,6 +73,19 @@ export default function AIAssistant() {
     navigator.clipboard.writeText(text);
     setCopiedIndex(index);
     setTimeout(() => setCopiedIndex(null), 2000);
+  };
+
+  const handleVoiceTranscript = (text: string) => {
+    setInput(prev => prev + (prev ? " " : "") + text);
+    toast({ title: "Voice captured! 🎤", description: text.slice(0, 50) + (text.length > 50 ? "..." : "") });
+  };
+
+  const handleImageGenerated = (imageUrl: string, prompt: string) => {
+    setMessages(prev => [
+      ...prev,
+      { role: "user", content: `🎨 Generate image: ${prompt}` },
+      { role: "assistant", content: `Here's your AI-generated image based on: "${prompt}"`, imageUrl }
+    ]);
   };
 
   const sendMessage = async () => {
@@ -113,11 +121,18 @@ export default function AIAssistant() {
         body: JSON.stringify({ messages: [...messages, { role: "user", content: messageContent }] }),
       });
 
-      if (!resp.ok || !resp.body) throw new Error("Failed to get response");
+      if (!resp.ok) {
+        const errorData = await resp.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to get response");
+      }
+
+      if (!resp.body) throw new Error("No response body");
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let textBuffer = "";
+
+      setIsSpeaking(true);
 
       while (true) {
         const { done, value } = await reader.read();
@@ -157,10 +172,13 @@ export default function AIAssistant() {
       }
     } catch (e) {
       console.error(e);
-      setMessages(prev => [...prev, { role: "assistant", content: "Oops! Something went wrong. Please try again 😅" }]);
+      const errorMessage = e instanceof Error ? e.message : "Something went wrong";
+      setMessages(prev => [...prev, { role: "assistant", content: `Oops! ${errorMessage}. Please try again 😅` }]);
+      toast({ title: "Error", description: errorMessage, variant: "destructive" });
     }
 
     setIsLoading(false);
+    setIsSpeaking(false);
   };
 
   const clearChat = () => {
@@ -174,79 +192,49 @@ export default function AIAssistant() {
   };
 
   const formatMessage = (content: string) => {
-    // Simple markdown-like formatting
     return content
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/`([^`]+)`/g, '<code class="bg-muted px-1 py-0.5 rounded text-sm">$1</code>')
-      .replace(/```([\s\S]*?)```/g, '<pre class="bg-muted p-3 rounded-lg my-2 overflow-x-auto text-sm"><code>$1</code></pre>');
+      .replace(/`([^`]+)`/g, '<code class="bg-muted px-1 py-0.5 rounded text-sm font-mono">$1</code>')
+      .replace(/```([\s\S]*?)```/g, '<pre class="bg-muted p-3 rounded-lg my-2 overflow-x-auto text-sm font-mono"><code>$1</code></pre>');
   };
 
   return (
     <div className="min-h-screen flex flex-col">
       {/* Hero Header */}
       <div className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-secondary/10 py-8 px-6 border-b border-border">
-        {/* Animated Background Elements */}
+        {/* Animated Background */}
         <div className="absolute inset-0 overflow-hidden">
           <motion.div
-            animate={{ 
-              rotate: 360,
-              scale: [1, 1.1, 1]
-            }}
+            animate={{ rotate: 360, scale: [1, 1.1, 1] }}
             transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            className="absolute -top-20 -right-20 w-64 h-64 bg-gradient-to-br from-primary/20 to-transparent rounded-full blur-3xl"
+            className="absolute -top-20 -right-20 w-80 h-80 bg-gradient-to-br from-primary/20 to-transparent rounded-full blur-3xl"
           />
           <motion.div
-            animate={{ 
-              rotate: -360,
-              scale: [1, 1.2, 1]
-            }}
+            animate={{ rotate: -360, scale: [1, 1.2, 1] }}
             transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-            className="absolute -bottom-20 -left-20 w-64 h-64 bg-gradient-to-br from-secondary/20 to-transparent rounded-full blur-3xl"
+            className="absolute -bottom-20 -left-20 w-80 h-80 bg-gradient-to-br from-secondary/20 to-transparent rounded-full blur-3xl"
           />
+          {/* Floating particles */}
+          {[...Array(8)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-2 h-2 bg-primary/30 rounded-full"
+              style={{ left: `${10 + i * 12}%`, top: `${20 + (i % 3) * 25}%` }}
+              animate={{ y: [-20, 20, -20], opacity: [0.3, 0.7, 0.3] }}
+              transition={{ duration: 3 + i * 0.5, repeat: Infinity, delay: i * 0.3 }}
+            />
+          ))}
         </div>
 
         <div className="relative flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            {/* 3D Avatar */}
-            <motion.div 
-              className="relative"
-              animate={{ y: [0, -5, 0] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            >
-              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary via-secondary to-accent p-1 shadow-2xl shadow-primary/30">
-                <div className="w-full h-full rounded-xl bg-gradient-to-br from-card to-card/80 flex items-center justify-center relative overflow-hidden">
-                  {/* Robot Face */}
-                  <div className="relative z-10">
-                    <Bot className="w-12 h-12 text-primary" />
-                  </div>
-                  {/* Glowing rings */}
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.2, 0.5] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="absolute inset-0 rounded-xl border-2 border-primary/30"
-                  />
-                  <motion.div
-                    animate={{ scale: [1.1, 1.3, 1.1], opacity: [0.3, 0.1, 0.3] }}
-                    transition={{ duration: 2, repeat: Infinity, delay: 0.3 }}
-                    className="absolute inset-0 rounded-xl border-2 border-secondary/20"
-                  />
-                </div>
-              </div>
-              {/* Status indicator */}
-              <motion.div
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-                className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-4 border-card flex items-center justify-center"
-              >
-                <Zap className="w-3 h-3 text-white" />
-              </motion.div>
-            </motion.div>
+          <div className="flex items-center gap-8">
+            <Avatar3D isSpeaking={isSpeaking} isThinking={isLoading} />
 
             <div>
               <motion.h1 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-3xl font-display font-bold gradient-text"
+                className="text-4xl font-display font-bold gradient-text"
               >
                 TechnoBot AI
               </motion.h1>
@@ -257,19 +245,20 @@ export default function AIAssistant() {
                 className="text-muted-foreground flex items-center gap-2 mt-1"
               >
                 <Brain className="w-4 h-4 text-primary" />
-                Powered by Advanced AI • Ready to assist
+                Powered by Gemini AI • Voice & Image Enabled
               </motion.p>
-              {/* Feature badges */}
+              
               <motion.div 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 }}
-                className="flex gap-2 mt-3"
+                className="flex flex-wrap gap-2 mt-3"
               >
                 {[
                   { icon: Code, label: "Code Analysis" },
                   { icon: FileText, label: "File Upload" },
-                  { icon: Cpu, label: "Tech Expert" }
+                  { icon: Wand2, label: "Image Gen" },
+                  { icon: Cpu, label: "Voice Input" }
                 ].map((feature, i) => (
                   <motion.span
                     key={feature.label}
@@ -306,7 +295,6 @@ export default function AIAssistant() {
               className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
               <div className={`max-w-3xl flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
-                {/* Avatar */}
                 <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${
                   msg.role === "user" 
                     ? "bg-secondary/20 border border-secondary/30" 
@@ -315,11 +303,10 @@ export default function AIAssistant() {
                   {msg.role === "user" ? (
                     <MessageSquare className="w-5 h-5 text-secondary" />
                   ) : (
-                    <Bot className="w-5 h-5 text-white" />
+                    <Sparkles className="w-5 h-5 text-white" />
                   )}
                 </div>
 
-                {/* Message Content */}
                 <div className={`relative group ${
                   msg.role === "user" 
                     ? "bg-secondary/10 border border-secondary/20" 
@@ -330,7 +317,16 @@ export default function AIAssistant() {
                     dangerouslySetInnerHTML={{ __html: formatMessage(msg.content) }}
                   />
                   
-                  {/* Copy button */}
+                  {msg.imageUrl && (
+                    <motion.img
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      src={msg.imageUrl}
+                      alt="AI Generated"
+                      className="mt-3 rounded-lg max-w-full border border-border"
+                    />
+                  )}
+                  
                   <button
                     onClick={() => copyToClipboard(msg.content, i)}
                     className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg bg-muted hover:bg-muted/80"
@@ -347,7 +343,6 @@ export default function AIAssistant() {
           ))}
         </AnimatePresence>
 
-        {/* Loading indicator */}
         {isLoading && messages[messages.length - 1]?.role === "user" && (
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -356,12 +351,24 @@ export default function AIAssistant() {
           >
             <div className="flex gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                <Bot className="w-5 h-5 text-white" />
+                <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}>
+                  <Brain className="w-5 h-5 text-white" />
+                </motion.div>
               </div>
               <div className="bg-card border border-border rounded-2xl rounded-tl-md p-4">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <Loader2 className="w-4 h-4 animate-spin text-primary" />
                   <span className="text-sm text-muted-foreground">TechnoBot is thinking...</span>
+                  <motion.div className="flex gap-1">
+                    {[0, 1, 2].map((i) => (
+                      <motion.span
+                        key={i}
+                        className="w-1.5 h-1.5 bg-primary rounded-full"
+                        animate={{ y: [0, -5, 0] }}
+                        transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
+                      />
+                    ))}
+                  </motion.div>
                 </div>
               </div>
             </div>
@@ -391,10 +398,7 @@ export default function AIAssistant() {
                 >
                   {getFileIcon(att.name)}
                   <span className="max-w-32 truncate">{att.name}</span>
-                  <button
-                    onClick={() => removeAttachment(i)}
-                    className="text-muted-foreground hover:text-destructive"
-                  >
+                  <button onClick={() => removeAttachment(i)} className="text-muted-foreground hover:text-destructive">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </motion.div>
@@ -408,7 +412,6 @@ export default function AIAssistant() {
       <div className="border-t border-border bg-card/80 backdrop-blur-xl p-6">
         <div className="max-w-4xl mx-auto">
           <div className="flex gap-3 items-end">
-            {/* File Upload */}
             <input
               type="file"
               ref={fileInputRef}
@@ -427,7 +430,9 @@ export default function AIAssistant() {
               <Upload className="w-5 h-5" />
             </Button>
 
-            {/* Text Input */}
+            <ImageGenerator onImageGenerated={handleImageGenerated} />
+            <VoiceInput onTranscript={handleVoiceTranscript} disabled={isLoading} />
+
             <div className="flex-1 relative">
               <Textarea
                 placeholder="Ask me anything about tech, code, or your projects..."
@@ -456,7 +461,7 @@ export default function AIAssistant() {
 
           <p className="text-xs text-muted-foreground mt-3 text-center flex items-center justify-center gap-2">
             <Sparkles className="w-3 h-3" />
-            TechnoBot AI • Upload code files for analysis • Press Enter to send
+            TechnoBot AI • Voice & Image Generation • File Analysis • Press Enter to send
           </p>
         </div>
       </div>
