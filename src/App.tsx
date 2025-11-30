@@ -14,6 +14,7 @@ import Teams from "./pages/Teams";
 import Achievements from "./pages/Achievements";
 import Events from "./pages/Events";
 import Admin from "./pages/Admin";
+import AIAssistant from "./pages/AIAssistant";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
               <Route path="/achievements" element={<Achievements />} />
               <Route path="/events" element={<Events />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/assistant" element={<AIAssistant />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
