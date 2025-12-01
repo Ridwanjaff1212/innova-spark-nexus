@@ -4,100 +4,102 @@
 
 @layer base {
   :root {
-    /* Wine Red + White Aesthetic */
+    /* Vine-Inspired White + Yellow Theme */
     --background: 0 0% 100%;
-    --foreground: 0 0% 10%;
+    --foreground: 40 10% 15%;
 
-    --card: 0 0% 98%;
-    --card-foreground: 0 0% 10%;
+    --card: 45 30% 98%;
+    --card-foreground: 40 10% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
+    --popover-foreground: 40 10% 15%;
 
-    --primary: 345 80% 35%;
-    --primary-foreground: 0 0% 100%;
+    /* Yellow accent: #E8C547 = hsl(45, 76%, 59%) */
+    --primary: 45 76% 59%;
+    --primary-foreground: 40 10% 10%;
 
-    --secondary: 345 60% 45%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 45 50% 70%;
+    --secondary-foreground: 40 10% 10%;
 
-    --muted: 345 10% 92%;
-    --muted-foreground: 345 10% 40%;
+    --muted: 45 15% 94%;
+    --muted-foreground: 40 10% 45%;
 
-    --accent: 345 70% 90%;
-    --accent-foreground: 345 80% 25%;
+    --accent: 45 60% 90%;
+    --accent-foreground: 45 76% 35%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 345 20% 85%;
-    --input: 345 20% 90%;
-    --ring: 345 80% 35%;
+    --border: 45 20% 88%;
+    --input: 45 20% 92%;
+    --ring: 45 76% 59%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    /* Custom TechnoVista colors - Wine theme */
-    --wine: 345 80% 35%;
-    --wine-light: 345 60% 50%;
-    --wine-dark: 345 80% 25%;
-    --cream: 40 30% 96%;
-    --gold: 40 80% 50%;
+    /* Custom TechnoVista colors - Vine Yellow theme */
+    --gold: 45 76% 59%;
+    --gold-light: 45 70% 75%;
+    --gold-dark: 45 80% 45%;
+    --cream: 45 30% 97%;
+    --vine: 85 30% 45%;
     
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
-    --gradient-glow: linear-gradient(180deg, hsl(var(--primary) / 0.2) 0%, transparent 100%);
-    --gradient-card: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(345 10% 95%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--gold-light)) 100%);
+    --gradient-glow: linear-gradient(180deg, hsl(var(--primary) / 0.15) 0%, transparent 100%);
+    --gradient-card: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(45 20% 96%) 100%);
     
     /* Shadows */
     --shadow-glow: 0 0 40px hsl(var(--primary) / 0.2);
-    --shadow-card: 0 4px 24px hsl(345 30% 20% / 0.1);
+    --shadow-card: 0 4px 24px hsl(45 30% 30% / 0.08);
 
-    --sidebar-background: 345 80% 25%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 345 80% 25%;
-    --sidebar-accent: 345 60% 30%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 345 60% 35%;
-    --sidebar-ring: 0 0% 100%;
+    --sidebar-background: 40 10% 12%;
+    --sidebar-foreground: 45 30% 95%;
+    --sidebar-primary: 45 76% 59%;
+    --sidebar-primary-foreground: 40 10% 10%;
+    --sidebar-accent: 40 15% 20%;
+    --sidebar-accent-foreground: 45 30% 95%;
+    --sidebar-border: 40 15% 25%;
+    --sidebar-ring: 45 76% 59%;
   }
 
   .dark {
-    --background: 345 30% 8%;
-    --foreground: 0 0% 98%;
+    /* Dark mode: Black + Gold accent */
+    --background: 40 15% 6%;
+    --foreground: 45 20% 95%;
 
-    --card: 345 25% 12%;
-    --card-foreground: 0 0% 98%;
+    --card: 40 15% 10%;
+    --card-foreground: 45 20% 95%;
 
-    --popover: 345 25% 10%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 40 15% 8%;
+    --popover-foreground: 45 20% 95%;
 
-    --primary: 345 70% 55%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 45 76% 59%;
+    --primary-foreground: 40 10% 10%;
 
-    --secondary: 345 50% 45%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 45 50% 45%;
+    --secondary-foreground: 45 20% 95%;
 
-    --muted: 345 20% 18%;
-    --muted-foreground: 345 10% 65%;
+    --muted: 40 15% 15%;
+    --muted-foreground: 45 15% 60%;
 
-    --accent: 345 40% 20%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 45 40% 18%;
+    --accent-foreground: 45 76% 70%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 345 20% 20%;
-    --input: 345 20% 20%;
-    --ring: 345 70% 55%;
+    --border: 40 15% 18%;
+    --input: 40 15% 18%;
+    --ring: 45 76% 59%;
 
-    --sidebar-background: 345 30% 10%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 345 70% 55%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 345 25% 18%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 345 20% 20%;
-    --sidebar-ring: 345 70% 55%;
+    --sidebar-background: 40 15% 8%;
+    --sidebar-foreground: 45 20% 95%;
+    --sidebar-primary: 45 76% 59%;
+    --sidebar-primary-foreground: 40 10% 10%;
+    --sidebar-accent: 40 15% 15%;
+    --sidebar-accent-foreground: 45 20% 95%;
+    --sidebar-border: 40 15% 18%;
+    --sidebar-ring: 45 76% 59%;
   }
 }
 
@@ -113,7 +115,7 @@
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Poppins', sans-serif;
-    font-weight: 600;
+    font-weight: 700;
   }
 }
 
@@ -124,11 +126,11 @@
 
   .gradient-text {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
+    background-image: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--gold-dark)) 100%);
   }
 
   .glow-effect {
-    box-shadow: 0 0 40px hsl(var(--primary) / 0.3), 0 0 80px hsl(var(--primary) / 0.1);
+    box-shadow: 0 0 40px hsl(var(--primary) / 0.25), 0 0 80px hsl(var(--primary) / 0.1);
   }
 
   .animate-float {
@@ -161,7 +163,7 @@
 
   .hover-lift:hover {
     transform: translateY(-4px);
-    box-shadow: 0 12px 40px hsl(var(--primary) / 0.2);
+    box-shadow: 0 12px 40px hsl(var(--primary) / 0.15);
   }
 
   .nav-link {
@@ -200,13 +202,44 @@
     @apply opacity-100;
   }
 
-  /* Admin specific styles */
+  /* Vine decoration */
+  .vine-border {
+    position: relative;
+  }
+
+  .vine-border::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 1px solid hsl(var(--primary) / 0.2);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  /* Admin specific styles - Dark mode with gold */
   .admin-card {
     @apply bg-card border border-border rounded-xl shadow-sm hover:shadow-md transition-shadow;
   }
 
   .admin-stat {
     @apply bg-gradient-to-br from-card to-muted/30 border border-border rounded-xl p-6;
+  }
+
+  /* Metallic effect */
+  .metallic {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary)) 0%,
+      hsl(45 70% 75%) 25%,
+      hsl(var(--primary)) 50%,
+      hsl(45 70% 75%) 75%,
+      hsl(var(--primary)) 100%
+    );
+    background-size: 200% 200%;
+    animation: shimmer-metallic 3s ease-in-out infinite;
   }
 }
 
@@ -225,10 +258,10 @@
 
 @keyframes pulse-glow {
   0%, 100% { 
-    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.25);
   }
   50% { 
-    box-shadow: 0 0 40px hsl(var(--primary) / 0.5), 0 0 60px hsl(var(--primary) / 0.2);
+    box-shadow: 0 0 40px hsl(var(--primary) / 0.4), 0 0 60px hsl(var(--primary) / 0.2);
   }
 }
 
@@ -276,6 +309,12 @@
   100% { background-position: 0% 50%; }
 }
 
+@keyframes shimmer-metallic {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 .animate-gradient {
   background-size: 200% 200%;
   animation: gradient-shift 8s ease infinite;
@@ -291,7 +330,7 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted));
+  background: hsl(var(--primary) / 0.3);
   border-radius: 4px;
 }
 
