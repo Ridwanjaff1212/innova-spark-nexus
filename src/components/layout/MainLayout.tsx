@@ -1,14 +1,19 @@
 import { useEffect } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import Sidebar from "./Sidebar";
 import { motion } from "framer-motion";
 import AIChatbot from "@/components/AIChatbot";
 import NotificationBell from "@/components/NotificationBell";
+import { useVisitorTracking } from "@/hooks/useVisitorTracking";
 
 export default function MainLayout() {
   const { user, loading, profile } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Track page visits
+  useVisitorTracking(location.pathname);
 
   useEffect(() => {
     if (!loading && !user) {

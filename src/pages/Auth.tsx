@@ -6,6 +6,9 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Sparkles, User, Shield, ArrowRight, Eye, EyeOff, Rocket } from "lucide-react";
+import { useVisitorTracking } from "@/hooks/useVisitorTracking";
+import VisitorCounter from "@/components/VisitorCounter";
+import emblem from "@/assets/icsk-emblem.png";
 
 type AuthMode = "welcome" | "login" | "signup" | "admin";
 
@@ -73,13 +76,27 @@ export default function Auth() {
     }
   };
 
+  // Track visitor
+  useVisitorTracking("/");
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 overflow-hidden relative">
-      {/* Animated background */}
+      {/* Visitor Counter */}
+      <VisitorCounter />
+
+      {/* Animated background with vine accents */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/20 rounded-full blur-3xl animate-pulse delay-1000" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent/10 rounded-full blur-3xl animate-spin-slow" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/15 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse delay-1000" />
+        
+        {/* Subtle vine decorations */}
+        <svg className="absolute top-0 left-0 w-64 h-64 opacity-[0.05]" viewBox="0 0 200 200">
+          <path d="M0,100 Q50,50 100,50 T200,0" fill="none" stroke="currentColor" strokeWidth="1" className="text-primary" />
+          <path d="M0,150 Q75,100 100,100 T150,50" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-primary" />
+        </svg>
+        <svg className="absolute bottom-0 right-0 w-64 h-64 opacity-[0.05] rotate-180" viewBox="0 0 200 200">
+          <path d="M0,100 Q50,50 100,50 T200,0" fill="none" stroke="currentColor" strokeWidth="1" className="text-primary" />
+        </svg>
       </div>
 
       {/* Floating particles */}
@@ -122,8 +139,16 @@ export default function Auth() {
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.2 }}
+                className="flex flex-col items-center"
               >
-                <Sparkles className="w-16 h-16 mx-auto text-primary mb-4" />
+                {/* School Emblem */}
+                <motion.div
+                  animate={{ scale: [1, 1.02, 1] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  className="w-20 h-20 mb-4 rounded-full overflow-hidden shadow-lg"
+                >
+                  <img src={emblem} alt="ICSK Emblem" className="w-full h-full object-contain" />
+                </motion.div>
                 <h1 className="text-5xl font-display font-bold gradient-text mb-2">TechnoVista</h1>
                 <p className="text-xl text-muted-foreground mb-2">Dream | Build | Innovate</p>
                 <p className="text-sm text-muted-foreground/70 mb-8">ICSK Khaitan Techno Club 2025</p>
