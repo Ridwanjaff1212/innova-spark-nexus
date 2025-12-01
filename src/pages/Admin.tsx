@@ -9,9 +9,10 @@ import {
   Shield, Users, FolderKanban, Calendar, CheckCircle, Star, Plus, Trash2, Download, 
   FileText, TrendingUp, Award, Zap, BarChart3, RefreshCw, Eye, Clock, Activity,
   UserCheck, Settings, Database, Bell, Search, Layers, ArrowUpRight, Send, Target,
-  AlertCircle, GraduationCap, Mail, Hash, Edit2, ChevronDown, ChevronUp
+  AlertCircle, GraduationCap, Mail, Hash, Edit2, ChevronDown, ChevronUp, Globe
 } from "lucide-react";
 import { exportMembersReport, exportProjectsReport } from "@/utils/pdfExport";
+import { getVisitorStats } from "@/hooks/useVisitorTracking";
 
 type TabType = "overview" | "projects" | "members" | "assignments" | "announcements" | "analytics";
 
@@ -44,10 +45,27 @@ export default function Admin() {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedMember, setExpandedMember] = useState<string | null>(null);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+  const [visitorStats, setVisitorStats] = useState({
+    todayVisits: 0,
+    uniqueToday: 0,
+    weekVisits: 0,
+    uniqueWeek: 0,
+    totalVisits: 0,
+  });
 
   useEffect(() => { 
     fetchAllData();
+    fetchVisitorStats();
   }, []);
+
+  const fetchVisitorStats = async () => {
+    try {
+      const stats = await getVisitorStats();
+      setVisitorStats(stats);
+    } catch (error) {
+      console.debug("Could not fetch visitor stats:", error);
+    }
+  };
 
   const fetchAllData = async () => {
     setLoading(true);
@@ -990,6 +1008,31 @@ export default function Admin() {
               exit={{ opacity: 0, y: -10 }}
               className="space-y-6"
             >
+              {/* Visitor Analytics */}
+              <div className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-xl p-6">
+                <h3 className="font-display font-semibold mb-4 flex items-center gap-2">
+                  <Globe className="w-5 h-5 text-primary" />
+                  Visitor Analytics
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  {[
+                    { label: "Today's Visits", value: visitorStats.todayVisits, icon: Eye },
+                    { label: "Unique Today", value: visitorStats.uniqueToday, icon: Users },
+                    { label: "This Week", value: visitorStats.weekVisits, icon: Activity },
+                    { label: "Unique Weekly", value: visitorStats.uniqueWeek, icon: UserCheck },
+                    { label: "Total All Time", value: visitorStats.totalVisits, icon: TrendingUp },
+                  ].map((stat) => (
+                    <div key={stat.label} className="bg-card/80 backdrop-blur rounded-lg p-4">
+                      <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+                        <stat.icon className="w-3 h-3" />
+                        {stat.label}
+                      </div>
+                      <p className="text-2xl font-bold">{stat.value.toLocaleString()}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
                   { label: "Total Projects", value: stats.totalProjects, icon: FolderKanban },
