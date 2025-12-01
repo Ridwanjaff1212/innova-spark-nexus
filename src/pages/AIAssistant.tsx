@@ -2,11 +2,12 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Sparkles, Loader2, Upload, Code, FileText, Brain, Cpu, MessageSquare, Trash2, Copy, Check, FileCode, Image as ImageIcon, File, Wand2 } from "lucide-react";
+import { Send, Sparkles, Loader2, Upload, Code, FileText, Brain, Cpu, MessageSquare, Trash2, Copy, Check, FileCode, Image as ImageIcon, File, Wand2, Video, Volume2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Avatar3D from "@/components/ai/Avatar3D";
 import VoiceInput from "@/components/ai/VoiceInput";
 import ImageGenerator from "@/components/ai/ImageGenerator";
+import TextToSpeech from "@/components/ai/TextToSpeech";
 type Message = {
   role: "user" | "assistant";
   content: string;
@@ -14,8 +15,10 @@ type Message = {
     name: string;
     type: string;
     content: string;
+    isVideo?: boolean;
   }[];
   imageUrl?: string;
+  videoUrl?: string;
 };
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`;
 export default function AIAssistant() {
@@ -24,7 +27,7 @@ export default function AIAssistant() {
   } = useToast();
   const [messages, setMessages] = useState<Message[]>([{
     role: "assistant",
-    content: "Hello! 👋 I'm **TechnoBot**, your advanced AI assistant powered by cutting-edge technology. I can help you with:\n\n🚀 **Tech Projects** - Get guidance on your innovations\n💻 **Code Review** - Upload code for analysis\n🎨 **Image Generation** - Create AI art with Gemini\n🎤 **Voice Input** - Talk to me directly\n💡 **Brainstorming** - Generate creative ideas\n\nHow can I assist you today?"
+    content: "Hello! 👋 I'm **TechnoBot**, your advanced AI assistant powered by cutting-edge technology. I can help you with:\n\n🚀 **Tech Projects** - Get guidance on your innovations\n💻 **Code Review** - Upload code for analysis\n🎨 **Image Generation** - Create AI art with Gemini\n🎤 **Voice Input** - Talk to me directly\n🎬 **Video Upload** - Share videos for discussion\n🔊 **Read Aloud** - I can speak my responses\n💡 **Brainstorming** - Generate creative ideas\n\nHow can I assist you today?"
   }]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -46,10 +49,11 @@ export default function AIAssistant() {
     const files = e.target.files;
     if (!files) return;
     for (const file of Array.from(files)) {
-      if (file.size > 5 * 1024 * 1024) {
+      const maxSize = file.type.startsWith("video/") ? 50 * 1024 * 1024 : 5 * 1024 * 1024;
+      if (file.size > maxSize) {
         toast({
           title: "File too large",
-          description: "Max file size is 5MB",
+          description: file.type.startsWith("video/") ? "Max video size is 50MB" : "Max file size is 5MB",
           variant: "destructive"
         });
         continue;
@@ -57,11 +61,19 @@ export default function AIAssistant() {
       const reader = new FileReader();
       reader.onload = () => {
         const content = reader.result as string;
+        const isVideo = file.type.startsWith("video/");
         setAttachments(prev => [...prev, {
           name: file.name,
           type: file.type || "text/plain",
-          content
+          content,
+          isVideo
         }]);
+        if (isVideo) {
+          toast({
+            title: "Video attached! 🎬",
+            description: `${file.name} ready to share`
+          });
+        }
       };
       if (file.type.startsWith("text/") || file.name.match(/\.(js|ts|jsx|tsx|py|java|cpp|c|html|css|json|md)$/)) {
         reader.readAsText(file);
@@ -210,6 +222,7 @@ export default function AIAssistant() {
   const getFileIcon = (name: string) => {
     if (name.match(/\.(js|ts|jsx|tsx|py|java|cpp|c|html|css|json)$/)) return <FileCode className="w-4 h-4" />;
     if (name.match(/\.(png|jpg|jpeg|gif|svg|webp)$/)) return <ImageIcon className="w-4 h-4" />;
+    if (name.match(/\.(mp4|webm|mov|avi|mkv)$/)) return <Video className="w-4 h-4" />;
     return <File className="w-4 h-4" />;
   };
   const formatMessage = (content: string) => {
@@ -290,8 +303,14 @@ export default function AIAssistant() {
                 icon: FileText,
                 label: "File Upload"
               }, {
+                icon: Video,
+                label: "Video Upload"
+              }, {
                 icon: Wand2,
                 label: "Image Gen"
+              }, {
+                icon: Volume2,
+                label: "Read Aloud"
               }, {
                 icon: Cpu,
                 label: "Voice Input"
@@ -354,10 +373,25 @@ export default function AIAssistant() {
                 opacity: 1,
                 scale: 1
               }} src={msg.imageUrl} alt="AI Generated" className="mt-3 rounded-lg max-w-full border border-border" />}
+
+                  {/* Video attachments */}
+                  {msg.attachments?.filter(a => a.isVideo).map((video, vi) => (
+                    <motion.video
+                      key={vi}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      controls
+                      className="mt-3 rounded-lg max-w-full border border-border"
+                      src={video.content}
+                    />
+                  ))}
                   
-                  <button onClick={() => copyToClipboard(msg.content, i)} className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg bg-muted hover:bg-muted/80">
-                    {copiedIndex === i ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5 text-muted-foreground" />}
-                  </button>
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                    {msg.role === "assistant" && <TextToSpeech text={msg.content} />}
+                    <button onClick={() => copyToClipboard(msg.content, i)} className="p-1.5 rounded-lg bg-muted hover:bg-muted/80">
+                      {copiedIndex === i ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5 text-muted-foreground" />}
+                    </button>
+                  </div>
                 </div>
               </div>
             </motion.div>)}
@@ -437,7 +471,7 @@ export default function AIAssistant() {
       <div className="border-t border-border bg-card/80 backdrop-blur-xl p-6">
         <div className="max-w-4xl mx-auto">
           <div className="flex gap-3 items-end">
-            <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" multiple accept=".js,.ts,.jsx,.tsx,.py,.java,.cpp,.c,.html,.css,.json,.md,.txt,.png,.jpg,.jpeg,.gif,.svg" />
+            <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" multiple accept=".js,.ts,.jsx,.tsx,.py,.java,.cpp,.c,.html,.css,.json,.md,.txt,.png,.jpg,.jpeg,.gif,.svg,.mp4,.webm,.mov,.avi" />
             <Button variant="outline" size="icon" onClick={() => fileInputRef.current?.click()} className="shrink-0" title="Upload files">
               <Upload className="w-5 h-5" />
             </Button>
