@@ -285,8 +285,9 @@ export default function AIAssistant() {
               y: 0
             }} transition={{
               delay: 0.1
-            }} className="text-muted-foreground flex items-center gap-2 mt-1">Powered by Techno Vista AI • Voice & Image Enabled<Brain className="w-4 h-4 text-primary" />
-                Powered by Gemini AI • Voice & Image Enabled
+            }} className="text-muted-foreground flex items-center gap-2 mt-1">
+                <Brain className="w-4 h-4 text-primary" />
+                Powered by TechnoVista AI • Voice & Image Enabled
               </motion.p>
               
               <motion.div initial={{
@@ -494,7 +495,7 @@ export default function AIAssistant() {
 
           <p className="text-xs text-muted-foreground mt-3 text-center flex items-center justify-center gap-2">
             <Sparkles className="w-3 h-3" />
-            TechnoBot AI • Voice & Image Generation • File Analysis • Press Enter to send
+            TechnoVista AI • Voice & Image Generation • File Analysis • Press Enter to send
           </p>
         </div>
       </div>
