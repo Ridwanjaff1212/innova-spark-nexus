@@ -9,9 +9,10 @@ const IMAGE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-image`;
 
 interface ImageGeneratorProps {
   onImageGenerated?: (imageUrl: string, prompt: string) => void;
+  disabled?: boolean;
 }
 
-export default function ImageGenerator({ onImageGenerated }: ImageGeneratorProps) {
+export default function ImageGenerator({ onImageGenerated, disabled }: ImageGeneratorProps) {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [prompt, setPrompt] = useState("");
@@ -82,6 +83,7 @@ export default function ImageGenerator({ onImageGenerated }: ImageGeneratorProps
         onClick={() => setIsOpen(!isOpen)}
         className={`shrink-0 transition-all ${isOpen ? "bg-primary/20 border-primary" : ""}`}
         title="Generate AI Image"
+        disabled={disabled}
       >
         <ImageIcon className="w-5 h-5" />
       </Button>
