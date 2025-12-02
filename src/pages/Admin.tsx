@@ -14,7 +14,7 @@ import {
 import { exportMembersReport, exportProjectsReport } from "@/utils/pdfExport";
 import { getVisitorStats } from "@/hooks/useVisitorTracking";
 
-type TabType = "overview" | "projects" | "members" | "assignments" | "announcements" | "analytics";
+type TabType = "overview" | "projects" | "members" | "assignments" | "announcements" | "analytics" | "gallery" | "system";
 
 interface Assignment {
   id: string;
@@ -52,6 +52,10 @@ export default function Admin() {
     uniqueWeek: 0,
     totalVisits: 0,
   });
+  const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
+  const [bulkAction, setBulkAction] = useState<string>("");
+  const [galleryItems, setGalleryItems] = useState<any[]>([]);
+  const [badges, setBadges] = useState<any[]>([]);
 
   useEffect(() => { 
     fetchAllData();
@@ -69,16 +73,18 @@ export default function Admin() {
 
   const fetchAllData = async () => {
     setLoading(true);
-    const [projectsRes, membersRes, announcementsRes, assignmentsRes] = await Promise.all([
+    const [projectsRes, membersRes, announcementsRes, assignmentsRes, badgesRes] = await Promise.all([
       supabase.from("projects").select("*").order("created_at", { ascending: false }),
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("announcements").select("*").order("created_at", { ascending: false }),
-      supabase.from("assignments").select("*").order("created_at", { ascending: false })
+      supabase.from("assignments").select("*").order("created_at", { ascending: false }),
+      supabase.from("badges").select("*").order("created_at", { ascending: false })
     ]);
     setProjects(projectsRes.data || []);
     setMembers(membersRes.data || []);
     setAnnouncements(announcementsRes.data || []);
     setAssignments((assignmentsRes.data as Assignment[]) || []);
+    setBadges(badgesRes.data || []);
     setLoading(false);
   };
 
@@ -193,6 +199,71 @@ export default function Admin() {
     fetchAllData();
   };
 
+  // Bulk operations
+  const handleBulkAction = async () => {
+    if (selectedProjects.length === 0) {
+      toast.error("No projects selected");
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      if (bulkAction === "approve") {
+        await Promise.all(selectedProjects.map(id => 
+          supabase.from("projects").update({ status: "approved" }).eq("id", id)
+        ));
+        toast.success(`${selectedProjects.length} projects approved`);
+      } else if (bulkAction === "feature") {
+        await Promise.all(selectedProjects.map(id => 
+          supabase.from("projects").update({ is_featured: true, status: "approved" }).eq("id", id)
+        ));
+        toast.success(`${selectedProjects.length} projects featured`);
+      } else if (bulkAction === "delete") {
+        await Promise.all(selectedProjects.map(id => 
+          supabase.from("projects").delete().eq("id", id)
+        ));
+        toast.success(`${selectedProjects.length} projects deleted`);
+      }
+      setSelectedProjects([]);
+      setBulkAction("");
+      fetchAllData();
+    } catch (error) {
+      toast.error("Bulk operation failed");
+    }
+    setLoading(false);
+  };
+
+  const grantXP = async (userId: string, amount: number) => {
+    const member = members.find(m => m.user_id === userId);
+    if (!member) return;
+    
+    const newXP = (member.xp_points || 0) + amount;
+    const newLevel = Math.floor(newXP / 100) + 1;
+    
+    await supabase.from("profiles").update({ 
+      xp_points: newXP,
+      level: newLevel 
+    }).eq("user_id", userId);
+    
+    toast.success(`Granted ${amount} XP to ${member.full_name}`);
+    fetchAllData();
+  };
+
+  const resetMemberProgress = async (userId: string) => {
+    await supabase.from("profiles").update({ 
+      xp_points: 0,
+      level: 1 
+    }).eq("user_id", userId);
+    toast.success("Member progress reset");
+    fetchAllData();
+  };
+
+  const toggleProjectSelection = (id: string) => {
+    setSelectedProjects(prev => 
+      prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+    );
+  };
+
   const exportCSV = (data: any[], filename: string) => {
     if (data.length === 0) {
       toast.error("No data to export");
@@ -256,6 +327,8 @@ export default function Admin() {
     { id: "assignments" as TabType, label: "Assignments", icon: Send },
     { id: "announcements" as TabType, label: "Announcements", icon: Bell },
     { id: "analytics" as TabType, label: "Analytics", icon: Layers },
+    { id: "gallery" as TabType, label: "Gallery", icon: Globe },
+    { id: "system" as TabType, label: "System", icon: Database },
   ];
 
   const assignmentTypes = [
@@ -485,11 +558,54 @@ export default function Admin() {
                   </Button>
                 </div>
               </div>
+
+              {/* Bulk Actions */}
+              {selectedProjects.length > 0 && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-primary/10 border border-primary/20 rounded-xl p-4 flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="font-medium">{selectedProjects.length} selected</span>
+                    <select 
+                      className="px-3 py-1.5 rounded-lg border border-border bg-background text-sm"
+                      value={bulkAction}
+                      onChange={(e) => setBulkAction(e.target.value)}
+                    >
+                      <option value="">Choose action...</option>
+                      <option value="approve">Approve All</option>
+                      <option value="feature">Feature All</option>
+                      <option value="delete">Delete All</option>
+                    </select>
+                    <Button size="sm" onClick={handleBulkAction} disabled={!bulkAction || loading}>
+                      Apply
+                    </Button>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedProjects([])}>
+                    Clear Selection
+                  </Button>
+                </motion.div>
+              )}
               
               <div className="bg-card border border-border rounded-xl overflow-hidden">
                 <table className="w-full">
                   <thead className="bg-muted/50 border-b border-border">
                     <tr>
+                      <th className="p-4 text-left">
+                        <input 
+                          type="checkbox" 
+                          checked={selectedProjects.length === filteredProjects.length && filteredProjects.length > 0}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedProjects(filteredProjects.map(p => p.id));
+                            } else {
+                              setSelectedProjects([]);
+                            }
+                          }}
+                          className="w-4 h-4 rounded border-border"
+                        />
+                      </th>
                       <th className="p-4 text-left text-sm font-medium text-muted-foreground">Project</th>
                       <th className="p-4 text-left text-sm font-medium text-muted-foreground">Category</th>
                       <th className="p-4 text-left text-sm font-medium text-muted-foreground">Status</th>
@@ -499,10 +615,18 @@ export default function Admin() {
                   </thead>
                   <tbody>
                     {filteredProjects.length === 0 ? (
-                      <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No projects found</td></tr>
+                      <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No projects found</td></tr>
                     ) : (
                       filteredProjects.map((p) => (
                         <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                          <td className="p-4">
+                            <input 
+                              type="checkbox"
+                              checked={selectedProjects.includes(p.id)}
+                              onChange={() => toggleProjectSelection(p.id)}
+                              className="w-4 h-4 rounded border-border"
+                            />
+                          </td>
                           <td className="p-4">
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -725,7 +849,7 @@ export default function Admin() {
                                 <div>
                                   <h5 className="font-medium mb-3 flex items-center gap-2">
                                     <Target className="w-4 h-4 text-primary" />
-                                    Member Details
+                                    Member Management
                                   </h5>
                                   <div className="space-y-2 text-sm">
                                     <div className="flex justify-between p-2 bg-background rounded-lg">
@@ -739,6 +863,38 @@ export default function Admin() {
                                     <div className="flex justify-between p-2 bg-background rounded-lg">
                                       <span className="text-muted-foreground">User ID</span>
                                       <code className="text-xs bg-muted px-1 rounded">{m.user_id?.slice(0, 8)}...</code>
+                                    </div>
+                                    <div className="pt-3 space-y-2">
+                                      <div className="flex gap-2">
+                                        <Button 
+                                          size="sm" 
+                                          variant="outline" 
+                                          className="flex-1"
+                                          onClick={() => grantXP(m.user_id, 50)}
+                                        >
+                                          <Zap className="w-3 h-3 mr-1" /> +50 XP
+                                        </Button>
+                                        <Button 
+                                          size="sm" 
+                                          variant="outline" 
+                                          className="flex-1"
+                                          onClick={() => grantXP(m.user_id, 100)}
+                                        >
+                                          <Zap className="w-3 h-3 mr-1" /> +100 XP
+                                        </Button>
+                                      </div>
+                                      <Button 
+                                        size="sm" 
+                                        variant="destructive" 
+                                        className="w-full"
+                                        onClick={() => {
+                                          if (confirm(`Reset ${m.full_name}'s progress?`)) {
+                                            resetMemberProgress(m.user_id);
+                                          }
+                                        }}
+                                      >
+                                        <AlertCircle className="w-3 h-3 mr-1" /> Reset Progress
+                                      </Button>
                                     </div>
                                   </div>
                                 </div>
@@ -1100,6 +1256,179 @@ export default function Admin() {
                       <span className="text-sm">Average Level</span>
                       <span className="font-semibold">{stats.avgLevel}</span>
                     </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Gallery Tab - NEW */}
+          {activeTab === "gallery" && (
+            <motion.div 
+              key="gallery"
+              initial={{ opacity: 0, y: 10 }} 
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-6"
+            >
+              <div className="bg-card border border-border rounded-xl p-6">
+                <h3 className="font-display font-semibold mb-4 flex items-center gap-2">
+                  <Globe className="w-5 h-5 text-primary" />
+                  Gallery Management
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  Upload and manage images/videos for the Events & Gallery page. Items will be visible to all users.
+                </p>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="bg-muted/20 border-2 border-dashed border-border rounded-xl p-8 text-center">
+                    <Globe className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground mb-3">Upload photos & videos</p>
+                    <Button>
+                      <Plus className="w-4 h-4 mr-2" /> Upload Media
+                    </Button>
+                  </div>
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-sm">Recent Uploads</h4>
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {[1, 2, 3].map((item) => (
+                        <div key={item} className="flex items-center justify-between p-3 bg-background border border-border rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
+                              <Globe className="w-5 h-5 text-muted-foreground" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">Gallery Item {item}</p>
+                              <p className="text-xs text-muted-foreground">Uploaded today</p>
+                            </div>
+                          </div>
+                          <Button variant="ghost" size="sm">
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-amber-500/10 to-amber-500/5 border border-amber-500/20 rounded-xl p-6">
+                <h4 className="font-medium mb-2 flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-amber-600" />
+                  Gallery Note
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  Uploaded media will appear on the Events & Gallery page. Ensure content follows school guidelines. 
+                  Supported formats: JPG, PNG, MP4, MOV (max 50MB per file).
+                </p>
+              </div>
+            </motion.div>
+          )}
+
+          {/* System Tab - NEW */}
+          {activeTab === "system" && (
+            <motion.div 
+              key="system"
+              initial={{ opacity: 0, y: 10 }} 
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-6"
+            >
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Database Stats */}
+                <div className="bg-card border border-border rounded-xl p-6">
+                  <h3 className="font-display font-semibold mb-4 flex items-center gap-2">
+                    <Database className="w-5 h-5 text-primary" />
+                    Database Overview
+                  </h3>
+                  <div className="space-y-3">
+                    {[
+                      { label: "Projects", count: projects.length },
+                      { label: "Members", count: members.length },
+                      { label: "Assignments", count: assignments.length },
+                      { label: "Announcements", count: announcements.length },
+                      { label: "Badges", count: badges.length },
+                    ].map((item) => (
+                      <div key={item.label} className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
+                        <span className="text-sm">{item.label}</span>
+                        <span className="font-semibold text-primary">{item.count} records</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* System Actions */}
+                <div className="bg-card border border-border rounded-xl p-6">
+                  <h3 className="font-display font-semibold mb-4 flex items-center gap-2">
+                    <Settings className="w-5 h-5 text-primary" />
+                    System Actions
+                  </h3>
+                  <div className="space-y-3">
+                    <Button variant="outline" className="w-full justify-start" onClick={fetchAllData}>
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Refresh All Data
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start" onClick={() => exportCSV(members, "full-backup")}>
+                      <Download className="w-4 h-4 mr-2" />
+                      Export Backup (CSV)
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start">
+                      <Database className="w-4 h-4 mr-2" />
+                      Database Health Check
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start text-amber-600 hover:text-amber-700">
+                      <AlertCircle className="w-4 h-4 mr-2" />
+                      View System Logs
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Danger Zone */}
+              <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-6">
+                <h3 className="font-display font-semibold mb-2 flex items-center gap-2 text-destructive">
+                  <AlertCircle className="w-5 h-5" />
+                  Danger Zone
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  These actions are irreversible. Use with extreme caution.
+                </p>
+                <div className="flex gap-3">
+                  <Button 
+                    variant="destructive" 
+                    onClick={() => {
+                      if (confirm("Are you sure you want to reset ALL member progress? This cannot be undone!")) {
+                        members.forEach(m => resetMemberProgress(m.user_id));
+                      }
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Reset All Progress
+                  </Button>
+                </div>
+              </div>
+
+              {/* System Info */}
+              <div className="bg-card border border-border rounded-xl p-6">
+                <h3 className="font-display font-semibold mb-4 flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-primary" />
+                  System Information
+                </h3>
+                <div className="grid md:grid-cols-2 gap-4 text-sm">
+                  <div className="p-3 bg-muted/30 rounded-lg">
+                    <span className="text-muted-foreground">Platform Version</span>
+                    <p className="font-medium mt-1">TechnoVista v2.0</p>
+                  </div>
+                  <div className="p-3 bg-muted/30 rounded-lg">
+                    <span className="text-muted-foreground">Last Updated</span>
+                    <p className="font-medium mt-1">{new Date().toLocaleDateString()}</p>
+                  </div>
+                  <div className="p-3 bg-muted/30 rounded-lg">
+                    <span className="text-muted-foreground">Admin Session</span>
+                    <p className="font-medium mt-1 text-green-600">Active</p>
+                  </div>
+                  <div className="p-3 bg-muted/30 rounded-lg">
+                    <span className="text-muted-foreground">Storage Usage</span>
+                    <p className="font-medium mt-1">Calculating...</p>
                   </div>
                 </div>
               </div>
