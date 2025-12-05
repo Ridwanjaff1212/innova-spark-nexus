@@ -9,7 +9,8 @@ import {
   Calendar, 
   LogOut,
   Bot,
-  Sparkles
+  Sparkles,
+  Terminal
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -115,14 +116,21 @@ export default function Sidebar() {
         )}
       </nav>
 
-      {/* AI Assistant Button */}
-      <div className="p-4 border-t border-border">
+      {/* AI Assistants */}
+      <div className="p-4 border-t border-border space-y-2">
         <NavLink
           to="/assistant"
           className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-primary/20 to-secondary/20 border border-primary/30 text-foreground hover:from-primary/30 hover:to-secondary/30 transition-all duration-300"
         >
           <Bot className="w-5 h-5 text-primary" />
           <span className="font-medium">AI Assistant</span>
+        </NavLink>
+        <NavLink
+          to="/code-assistant"
+          className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border border-emerald-500/30 text-foreground hover:from-emerald-500/30 hover:to-cyan-500/30 transition-all duration-300"
+        >
+          <Terminal className="w-5 h-5 text-emerald-500" />
+          <span className="font-medium">Code Assistant</span>
         </NavLink>
       </div>
 
