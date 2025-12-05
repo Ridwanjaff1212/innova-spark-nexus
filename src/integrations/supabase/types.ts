@@ -175,6 +175,89 @@ export type Database = {
         }
         Relationships: []
       }
+      code_hub_snippets: {
+        Row: {
+          category: string | null
+          code: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_featured: boolean | null
+          language: string
+          likes_count: number | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          user_id: string
+          views_count: number | null
+        }
+        Insert: {
+          category?: string | null
+          code: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_featured?: boolean | null
+          language?: string
+          likes_count?: number | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+          views_count?: number | null
+        }
+        Update: {
+          category?: string | null
+          code?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_featured?: boolean | null
+          language?: string
+          likes_count?: number | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+          views_count?: number | null
+        }
+        Relationships: []
+      }
+      code_reviews: {
+        Row: {
+          created_at: string | null
+          feedback: string | null
+          id: string
+          rating: number | null
+          reviewer_id: string
+          snippet_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          feedback?: string | null
+          id?: string
+          rating?: number | null
+          reviewer_id: string
+          snippet_id: string
+        }
+        Update: {
+          created_at?: string | null
+          feedback?: string | null
+          id?: string
+          rating?: number | null
+          reviewer_id?: string
+          snippet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "code_reviews_snippet_id_fkey"
+            columns: ["snippet_id"]
+            isOneToOne: false
+            referencedRelation: "code_hub_snippets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       creative_hub_posts: {
         Row: {
           content: string | null

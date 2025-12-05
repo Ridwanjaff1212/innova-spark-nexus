@@ -9,12 +9,12 @@ import {
   Shield, Users, FolderKanban, Calendar, CheckCircle, Star, Plus, Trash2, Download, 
   FileText, TrendingUp, Award, Zap, BarChart3, RefreshCw, Eye, Clock, Activity,
   UserCheck, Settings, Database, Bell, Search, Layers, ArrowUpRight, Send, Target,
-  AlertCircle, GraduationCap, Mail, Hash, Edit2, ChevronDown, ChevronUp, Globe
+  AlertCircle, GraduationCap, Mail, Hash, Edit2, ChevronDown, ChevronUp, Globe, Terminal, Braces, Copy
 } from "lucide-react";
 import { exportMembersReport, exportProjectsReport } from "@/utils/pdfExport";
 import { getVisitorStats } from "@/hooks/useVisitorTracking";
 
-type TabType = "overview" | "projects" | "members" | "assignments" | "announcements" | "analytics" | "gallery" | "system";
+type TabType = "overview" | "projects" | "members" | "assignments" | "announcements" | "analytics" | "gallery" | "codehub" | "system";
 
 interface Assignment {
   id: string;
@@ -56,6 +56,7 @@ export default function Admin() {
   const [bulkAction, setBulkAction] = useState<string>("");
   const [galleryItems, setGalleryItems] = useState<any[]>([]);
   const [badges, setBadges] = useState<any[]>([]);
+  const [codeSnippets, setCodeSnippets] = useState<any[]>([]);
 
   useEffect(() => { 
     fetchAllData();
@@ -73,18 +74,20 @@ export default function Admin() {
 
   const fetchAllData = async () => {
     setLoading(true);
-    const [projectsRes, membersRes, announcementsRes, assignmentsRes, badgesRes] = await Promise.all([
+    const [projectsRes, membersRes, announcementsRes, assignmentsRes, badgesRes, snippetsRes] = await Promise.all([
       supabase.from("projects").select("*").order("created_at", { ascending: false }),
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("announcements").select("*").order("created_at", { ascending: false }),
       supabase.from("assignments").select("*").order("created_at", { ascending: false }),
-      supabase.from("badges").select("*").order("created_at", { ascending: false })
+      supabase.from("badges").select("*").order("created_at", { ascending: false }),
+      supabase.from("code_hub_snippets").select("*").order("created_at", { ascending: false })
     ]);
     setProjects(projectsRes.data || []);
     setMembers(membersRes.data || []);
     setAnnouncements(announcementsRes.data || []);
     setAssignments((assignmentsRes.data as Assignment[]) || []);
     setBadges(badgesRes.data || []);
+    setCodeSnippets(snippetsRes.data || []);
     setLoading(false);
   };
 
@@ -328,8 +331,21 @@ export default function Admin() {
     { id: "announcements" as TabType, label: "Announcements", icon: Bell },
     { id: "analytics" as TabType, label: "Analytics", icon: Layers },
     { id: "gallery" as TabType, label: "Gallery", icon: Globe },
+    { id: "codehub" as TabType, label: "Code Hub", icon: Terminal },
     { id: "system" as TabType, label: "System", icon: Database },
   ];
+
+  const featureSnippet = async (id: string) => {
+    await supabase.from("code_hub_snippets").update({ is_featured: true }).eq("id", id);
+    toast.success("Snippet featured");
+    fetchAllData();
+  };
+
+  const deleteSnippet = async (id: string) => {
+    await supabase.from("code_hub_snippets").delete().eq("id", id);
+    toast.success("Snippet deleted");
+    fetchAllData();
+  };
 
   const assignmentTypes = [
     { value: "task", label: "Task" },
@@ -1324,6 +1340,123 @@ export default function Admin() {
             </motion.div>
           )}
 
+          {/* Code Hub Tab */}
+          {activeTab === "codehub" && (
+            <motion.div 
+              key="codehub"
+              initial={{ opacity: 0, y: 10 }} 
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-6"
+            >
+              {/* Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { label: "Total Snippets", value: codeSnippets.length, icon: Braces },
+                  { label: "Featured", value: codeSnippets.filter(s => s.is_featured).length, icon: Star },
+                  { label: "Languages", value: [...new Set(codeSnippets.map(s => s.language))].length, icon: Terminal },
+                  { label: "Total Views", value: codeSnippets.reduce((sum, s) => sum + (s.views_count || 0), 0), icon: Eye },
+                ].map((stat, i) => (
+                  <div key={stat.label} className="bg-card border border-border rounded-xl p-4">
+                    <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                      <stat.icon className="w-4 h-4" />
+                      <span className="text-xs">{stat.label}</span>
+                    </div>
+                    <p className="text-2xl font-bold">{stat.value}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Snippets List */}
+              <div className="bg-card border border-border rounded-xl overflow-hidden">
+                <div className="p-4 border-b border-border flex items-center justify-between">
+                  <h3 className="font-display font-semibold flex items-center gap-2">
+                    <Terminal className="w-5 h-5 text-emerald-500" />
+                    Code Snippets Management
+                  </h3>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => exportCSV(codeSnippets, "code-snippets")}>
+                      <Download className="w-4 h-4 mr-1" />
+                      Export
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="divide-y divide-border max-h-[600px] overflow-y-auto">
+                  {codeSnippets.length > 0 ? codeSnippets.map((snippet) => (
+                    <div key={snippet.id} className="p-4 hover:bg-muted/30 transition-colors">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-medium truncate">{snippet.title}</h4>
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 text-xs">
+                              {snippet.language}
+                            </span>
+                            {snippet.is_featured && (
+                              <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-600 text-xs flex items-center gap-1">
+                                <Star className="w-3 h-3" /> Featured
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground line-clamp-1">{snippet.description || "No description"}</p>
+                          <pre className="mt-2 p-2 rounded bg-muted/50 text-xs font-mono overflow-x-auto max-h-20">
+                            <code>{snippet.code?.slice(0, 150)}{snippet.code?.length > 150 ? "..." : ""}</code>
+                          </pre>
+                          <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> {snippet.views_count || 0} views</span>
+                            <span>{new Date(snippet.created_at).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {!snippet.is_featured && (
+                            <Button variant="outline" size="sm" onClick={() => featureSnippet(snippet.id)}>
+                              <Star className="w-4 h-4" />
+                            </Button>
+                          )}
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => deleteSnippet(snippet.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="p-12 text-center">
+                      <Braces className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
+                      <p className="text-muted-foreground">No code snippets yet</p>
+                      <p className="text-sm text-muted-foreground mt-1">Snippets shared in Code Hub will appear here</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Language Distribution */}
+              <div className="bg-card border border-border rounded-xl p-6">
+                <h3 className="font-display font-semibold mb-4 flex items-center gap-2">
+                  <Layers className="w-5 h-5 text-primary" />
+                  Language Distribution
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {Object.entries(
+                    codeSnippets.reduce((acc: Record<string, number>, s) => {
+                      acc[s.language] = (acc[s.language] || 0) + 1;
+                      return acc;
+                    }, {})
+                  ).map(([lang, count]) => (
+                    <div key={lang} className="p-3 bg-muted/30 rounded-lg text-center">
+                      <p className="text-lg font-bold">{count as number}</p>
+                      <p className="text-xs text-muted-foreground capitalize">{lang}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
           {/* System Tab - NEW */}
           {activeTab === "system" && (
             <motion.div 
@@ -1347,6 +1480,7 @@ export default function Admin() {
                       { label: "Assignments", count: assignments.length },
                       { label: "Announcements", count: announcements.length },
                       { label: "Badges", count: badges.length },
+                      { label: "Code Snippets", count: codeSnippets.length },
                     ].map((item) => (
                       <div key={item.label} className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
                         <span className="text-sm">{item.label}</span>

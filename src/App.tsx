@@ -18,6 +18,7 @@ import Events from "./pages/Events";
 import Admin from "./pages/Admin";
 import AIAssistant from "./pages/AIAssistant";
 import CodeAssistant from "./pages/CodeAssistant";
+import CodeHub from "./pages/CodeHub";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => {
                 <Route path="/projects" element={<Projects />} />
                 <Route path="/projects/new" element={<ProjectUpload />} />
                 <Route path="/creative-hub" element={<CreativeHub />} />
+                <Route path="/code-hub" element={<CodeHub />} />
                 <Route path="/teams" element={<Teams />} />
                 <Route path="/achievements" element={<Achievements />} />
                 <Route path="/events" element={<Events />} />

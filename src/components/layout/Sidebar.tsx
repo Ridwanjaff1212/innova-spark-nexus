@@ -19,6 +19,7 @@ const navItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { to: "/projects", icon: FolderKanban, label: "Projects" },
   { to: "/creative-hub", icon: Lightbulb, label: "Creative Hub" },
+  { to: "/code-hub", icon: Terminal, label: "Code Hub" },
   { to: "/teams", icon: Users, label: "Teams" },
   { to: "/achievements", icon: Trophy, label: "Achievements" },
   { to: "/events", icon: Calendar, label: "Events" },
