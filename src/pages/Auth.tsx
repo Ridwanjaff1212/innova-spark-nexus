@@ -145,9 +145,9 @@ export default function Auth() {
                 <motion.div
                   animate={{ scale: [1, 1.02, 1] }}
                   transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                  className="w-20 h-20 mb-4 rounded-full overflow-hidden shadow-lg"
+                  className="w-20 h-20 mb-4 rounded-full overflow-hidden shadow-lg bg-white"
                 >
-                  <img src={emblem} alt="ICSK Emblem" className="w-full h-full object-contain" />
+                  <img src={emblem} alt="ICSK Emblem" className="w-full h-full object-contain p-1" />
                 </motion.div>
                 <h1 className="text-5xl font-display font-bold gradient-text mb-2">TechnoVista</h1>
                 <p className="text-xl text-muted-foreground mb-2">Dream | Build | Innovate</p>

@@ -34,6 +34,9 @@ enable_confirmations = false
 [functions.ai-chat]
 verify_jwt = false
 
+[functions.ai-code]
+verify_jwt = false
+
 [functions.ai-image]
 verify_jwt = false
 

@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import AIChatbot from "@/components/AIChatbot";
 import NotificationBell from "@/components/NotificationBell";
 import { useVisitorTracking } from "@/hooks/useVisitorTracking";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function MainLayout() {
   const { user, loading, profile } = useAuth();
@@ -80,6 +81,7 @@ export default function MainLayout() {
               🆔 {profile.technovista_id}
             </div>
           )}
+          <ThemeToggle />
           <NotificationBell />
         </motion.div>
       </div>

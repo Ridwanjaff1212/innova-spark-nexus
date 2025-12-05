@@ -84,28 +84,28 @@ export default function LoadingScreen({ onComplete, minDuration = 2500 }: Loadin
           />
 
           {/* Metallic emblem */}
-          <motion.div
-            animate={{ rotate: [0, 5, -5, 0] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            className="relative"
-          >
-            <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden shadow-2xl relative">
-              {/* Metallic shine overlay */}
-              <motion.div
-                animate={{ x: ["-100%", "100%"] }}
-                transition={{ duration: 2, repeat: Infinity, repeatDelay: 1, ease: "easeInOut" }}
-                className="absolute inset-0 z-10"
-                style={{
-                  background: "linear-gradient(90deg, transparent 0%, hsl(var(--primary) / 0.3) 50%, transparent 100%)",
-                }}
-              />
-              <img 
-                src={emblem} 
-                alt="ICSK Emblem" 
-                className="w-full h-full object-contain"
-              />
-            </div>
-          </motion.div>
+            <motion.div
+              animate={{ rotate: [0, 5, -5, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              className="relative"
+            >
+              <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden shadow-2xl relative bg-white">
+                {/* Metallic shine overlay */}
+                <motion.div
+                  animate={{ x: ["-100%", "100%"] }}
+                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 1, ease: "easeInOut" }}
+                  className="absolute inset-0 z-10"
+                  style={{
+                    background: "linear-gradient(90deg, transparent 0%, hsl(var(--primary) / 0.3) 50%, transparent 100%)",
+                  }}
+                />
+                <img 
+                  src={emblem} 
+                  alt="ICSK Emblem" 
+                  className="w-full h-full object-contain p-2"
+                />
+              </div>
+            </motion.div>
         </motion.div>
 
         {/* Title */}
