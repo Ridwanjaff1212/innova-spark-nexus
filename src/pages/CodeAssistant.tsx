@@ -2,10 +2,11 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import SyntaxHighlighter from "@/components/code/SyntaxHighlighter";
 import { 
   Send, Code, Bug, FileCheck, BookOpen, Wand2, Loader2, Copy, Check, 
   Trash2, Terminal, Sparkles, Braces, FileCode, Play, Lightbulb,
-  ChevronDown
+  ChevronDown, Upload, Zap, History, Bot, Settings
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -22,44 +23,27 @@ type Message = {
 
 type CodeMode = "code" | "debug" | "review" | "explain" | "generate";
 
-const modes: { id: CodeMode; label: string; icon: React.ElementType; description: string }[] = [
-  { id: "code", label: "Code Help", icon: Code, description: "General coding assistance" },
-  { id: "debug", label: "Debug", icon: Bug, description: "Find and fix bugs" },
-  { id: "review", label: "Review", icon: FileCheck, description: "Code review & best practices" },
-  { id: "explain", label: "Explain", icon: BookOpen, description: "Understand code concepts" },
-  { id: "generate", label: "Generate", icon: Wand2, description: "Generate new code" },
+const modes: { id: CodeMode; label: string; icon: React.ElementType; description: string; color: string }[] = [
+  { id: "code", label: "Code Help", icon: Code, description: "General coding assistance", color: "from-blue-500 to-cyan-500" },
+  { id: "debug", label: "Debug", icon: Bug, description: "Find and fix bugs", color: "from-red-500 to-orange-500" },
+  { id: "review", label: "Review", icon: FileCheck, description: "Code review & best practices", color: "from-purple-500 to-pink-500" },
+  { id: "explain", label: "Explain", icon: BookOpen, description: "Understand code concepts", color: "from-amber-500 to-yellow-500" },
+  { id: "generate", label: "Generate", icon: Wand2, description: "Generate new code", color: "from-emerald-500 to-teal-500" },
 ];
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-code`;
 
 export default function CodeAssistant() {
   const { toast } = useToast();
-  const [messages, setMessages] = useState<Message[]>([{
-    role: "assistant",
-    content: `# Welcome to CodeMaster AI 💻
-
-I'm your professional coding assistant, ready to help with:
-
-\`\`\`
-🐍 Python    📜 JavaScript    🔷 TypeScript
-☕ Java      🔧 C++           🌐 HTML/CSS
-\`\`\`
-
-**Select a mode above to get started:**
-- **Code Help** - General programming questions
-- **Debug** - Find and fix errors in your code
-- **Review** - Get feedback on your code
-- **Explain** - Understand complex concepts
-- **Generate** - Create new code from descriptions
-
-Paste your code or describe what you need!`
-  }]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [mode, setMode] = useState<CodeMode>("code");
   const [isLoading, setIsLoading] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -74,6 +58,34 @@ Paste your code or describe what you need!`
   const copyCodeBlock = (code: string) => {
     navigator.clipboard.writeText(code);
     toast({ title: "Code copied! 📋", description: "Ready to paste" });
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      const extension = file.name.split(".").pop() || "";
+      const languageMap: Record<string, string> = {
+        js: "javascript",
+        ts: "typescript",
+        py: "python",
+        java: "java",
+        cpp: "cpp",
+        c: "c",
+        html: "html",
+        css: "css",
+        sql: "sql",
+        json: "json",
+        md: "markdown",
+      };
+      const language = languageMap[extension] || extension;
+      setInput(`\`\`\`${language}\n${content}\n\`\`\`\n\nPlease analyze this code.`);
+    };
+    reader.readAsText(file);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const sendMessage = async () => {
@@ -158,14 +170,11 @@ Paste your code or describe what you need!`
   };
 
   const clearChat = () => {
-    setMessages([{
-      role: "assistant",
-      content: "Chat cleared! 🧹 Ready for new code questions."
-    }]);
+    setMessages([]);
+    toast({ title: "Chat cleared 🧹", description: "Ready for new questions" });
   };
 
   const formatMessage = (content: string) => {
-    // Handle code blocks with syntax highlighting hints
     const parts = content.split(/(```[\s\S]*?```)/g);
     return parts.map((part, idx) => {
       if (part.startsWith("```")) {
@@ -186,14 +195,11 @@ Paste your code or describe what you need!`
                   Copy
                 </Button>
               </div>
-              <pre className="bg-muted/50 border border-t-0 border-border/50 rounded-b-lg p-4 overflow-x-auto">
-                <code className="text-sm font-mono">{code.trim()}</code>
-              </pre>
+              <SyntaxHighlighter code={code.trim()} language={lang || "javascript"} showLineNumbers />
             </div>
           );
         }
       }
-      // Handle inline code and bold
       return (
         <span
           key={idx}
@@ -220,12 +226,12 @@ Paste your code or describe what you need!`
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 via-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/25"
+                className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${currentMode.color} flex items-center justify-center shadow-lg`}
               >
                 <Terminal className="w-7 h-7 text-white" />
               </motion.div>
               <div>
-                <h1 className="text-2xl font-display font-bold bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-600 bg-clip-text text-transparent">
+                <h1 className={`text-2xl font-display font-bold bg-gradient-to-r ${currentMode.color} bg-clip-text text-transparent`}>
                   CodeMaster AI
                 </h1>
                 <p className="text-sm text-muted-foreground">Professional Coding Assistant</p>
@@ -236,20 +242,22 @@ Paste your code or describe what you need!`
               {/* Mode Selector */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="gap-2 bg-card/60 border-border/50">
+                  <Button variant="outline" className={`gap-2 bg-card/60 border-border/50`}>
                     <currentMode.icon className="w-4 h-4" />
                     {currentMode.label}
                     <ChevronDown className="w-4 h-4 opacity-50" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align="end" className="w-64">
                   {modes.map((m) => (
                     <DropdownMenuItem
                       key={m.id}
                       onClick={() => setMode(m.id)}
                       className={mode === m.id ? "bg-primary/10" : ""}
                     >
-                      <m.icon className="w-4 h-4 mr-2" />
+                      <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${m.color} flex items-center justify-center mr-3`}>
+                        <m.icon className="w-4 h-4 text-white" />
+                      </div>
                       <div>
                         <div className="font-medium">{m.label}</div>
                         <div className="text-xs text-muted-foreground">{m.description}</div>
@@ -268,20 +276,20 @@ Paste your code or describe what you need!`
           {/* Quick Actions */}
           <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
             {[
-              { label: "Python help", icon: "🐍" },
-              { label: "Fix my code", icon: "🔧" },
-              { label: "Explain this", icon: "💡" },
-              { label: "Write a function", icon: "📝" },
-              { label: "Best practices", icon: "✅" },
+              { label: "🐍 Python help", prompt: "Help me with Python code" },
+              { label: "🔧 Fix my code", prompt: "Please debug and fix this code" },
+              { label: "💡 Explain this", prompt: "Explain this code step by step" },
+              { label: "📝 Write a function", prompt: "Write a function that" },
+              { label: "✅ Best practices", prompt: "Review this code for best practices" },
+              { label: "⚡ Optimize", prompt: "Optimize this code for performance" },
             ].map((action) => (
               <Button
                 key={action.label}
                 variant="outline"
                 size="sm"
-                onClick={() => setInput(action.label)}
+                onClick={() => setInput(action.prompt)}
                 className="shrink-0 bg-card/40 border-border/30 hover:bg-card/60"
               >
-                <span className="mr-1">{action.icon}</span>
                 {action.label}
               </Button>
             ))}
@@ -291,6 +299,42 @@ Paste your code or describe what you need!`
 
       {/* Chat Messages */}
       <div className="flex-1 overflow-y-auto p-6 space-y-6 container mx-auto max-w-4xl">
+        {messages.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-16"
+          >
+            <div className={`w-20 h-20 mx-auto mb-6 rounded-3xl bg-gradient-to-br ${currentMode.color} flex items-center justify-center shadow-xl`}>
+              <Bot className="w-10 h-10 text-white" />
+            </div>
+            <h2 className="text-2xl font-display font-bold mb-2">Welcome to CodeMaster AI</h2>
+            <p className="text-muted-foreground mb-8 max-w-md mx-auto">
+              Your professional coding assistant. Ask questions, debug code, get reviews, and more.
+            </p>
+
+            <div className="grid md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+              {[
+                { icon: Code, title: "Code Snippets", desc: "Get help with any programming language" },
+                { icon: Bug, title: "Debug Issues", desc: "Find and fix errors in your code" },
+                { icon: Lightbulb, title: "Learn Concepts", desc: "Understand algorithms and patterns" },
+              ].map((feature, i) => (
+                <motion.div
+                  key={feature.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 + i * 0.1 }}
+                  className="p-4 rounded-2xl bg-card border border-border"
+                >
+                  <feature.icon className="w-8 h-8 mx-auto mb-3 text-primary" />
+                  <h3 className="font-semibold mb-1">{feature.title}</h3>
+                  <p className="text-xs text-muted-foreground">{feature.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
         <AnimatePresence mode="popLayout">
           {messages.map((msg, i) => (
             <motion.div
@@ -304,7 +348,7 @@ Paste your code or describe what you need!`
                 <div className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${
                   msg.role === "user"
                     ? "bg-primary/20 border border-primary/30"
-                    : "bg-gradient-to-br from-emerald-500 to-cyan-500"
+                    : `bg-gradient-to-br ${currentMode.color}`
                 }`}>
                   {msg.role === "user" ? (
                     <FileCode className="w-5 h-5 text-primary" />
@@ -340,7 +384,7 @@ Paste your code or describe what you need!`
 
         {isLoading && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center">
+            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${currentMode.color} flex items-center justify-center`}>
               <Loader2 className="w-5 h-5 text-white animate-spin" />
             </div>
             <div className="bg-card border border-border rounded-2xl px-5 py-4">
@@ -376,20 +420,37 @@ Paste your code or describe what you need!`
                   }
                 }}
                 placeholder="Paste your code or describe what you need..."
-                className="min-h-[60px] max-h-[200px] resize-none pr-12 bg-card border-border/50 focus:border-primary/50 font-mono text-sm"
+                className="min-h-[60px] max-h-[200px] resize-none pr-24 bg-card border-border/50 focus:border-primary/50 font-mono text-sm"
               />
-              <Button
-                onClick={sendMessage}
-                disabled={isLoading || !input.trim()}
-                size="icon"
-                className="absolute right-2 bottom-2 h-9 w-9 rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600"
-              >
-                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              </Button>
+              <div className="absolute right-2 bottom-2 flex gap-2">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  accept=".js,.ts,.py,.java,.cpp,.c,.html,.css,.sql,.json,.md,.txt"
+                  className="hidden"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="h-9 w-9 text-muted-foreground hover:text-foreground"
+                >
+                  <Upload className="w-4 h-4" />
+                </Button>
+                <Button
+                  onClick={sendMessage}
+                  disabled={isLoading || !input.trim()}
+                  size="icon"
+                  className={`h-9 w-9 rounded-lg bg-gradient-to-r ${currentMode.color}`}
+                >
+                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                </Button>
+              </div>
             </div>
           </div>
           <p className="text-xs text-center text-muted-foreground mt-2">
-            Shift+Enter for new line • Supports Python, JavaScript, TypeScript, Java, C++, and more
+            Shift+Enter for new line • Upload files or paste code • Supports Python, JavaScript, TypeScript, Java, C++, and more
           </p>
         </div>
       </div>
