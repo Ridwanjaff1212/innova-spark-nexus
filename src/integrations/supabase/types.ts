@@ -148,6 +148,41 @@ export type Database = {
         }
         Relationships: []
       }
+      challenge_completions: {
+        Row: {
+          challenge_id: string
+          completed_at: string | null
+          id: string
+          submission_code: string | null
+          user_id: string
+          xp_earned: number | null
+        }
+        Insert: {
+          challenge_id: string
+          completed_at?: string | null
+          id?: string
+          submission_code?: string | null
+          user_id: string
+          xp_earned?: number | null
+        }
+        Update: {
+          challenge_id?: string
+          completed_at?: string | null
+          id?: string
+          submission_code?: string | null
+          user_id?: string
+          xp_earned?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_completions_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "coding_challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       challenges: {
         Row: {
           created_at: string | null
@@ -223,6 +258,44 @@ export type Database = {
         }
         Relationships: []
       }
+      code_review_requests: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          requester_id: string
+          snippet_id: string
+          status: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          requester_id: string
+          snippet_id: string
+          status?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          requester_id?: string
+          snippet_id?: string
+          status?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "code_review_requests_snippet_id_fkey"
+            columns: ["snippet_id"]
+            isOneToOne: false
+            referencedRelation: "code_hub_snippets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       code_reviews: {
         Row: {
           created_at: string | null
@@ -257,6 +330,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      coding_challenges: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          deadline: string | null
+          description: string | null
+          difficulty: string | null
+          id: string
+          is_active: boolean | null
+          language: string | null
+          solution_hint: string | null
+          starter_code: string | null
+          title: string
+          xp_reward: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          deadline?: string | null
+          description?: string | null
+          difficulty?: string | null
+          id?: string
+          is_active?: boolean | null
+          language?: string | null
+          solution_hint?: string | null
+          starter_code?: string | null
+          title: string
+          xp_reward?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          deadline?: string | null
+          description?: string | null
+          difficulty?: string | null
+          id?: string
+          is_active?: boolean | null
+          language?: string | null
+          solution_hint?: string | null
+          starter_code?: string | null
+          title?: string
+          xp_reward?: number | null
+        }
+        Relationships: []
       }
       creative_hub_posts: {
         Row: {
@@ -420,6 +538,44 @@ export type Database = {
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_responses: {
+        Row: {
+          created_at: string | null
+          feedback: string
+          id: string
+          rating: number | null
+          request_id: string
+          reviewer_id: string
+          xp_earned: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          feedback: string
+          id?: string
+          rating?: number | null
+          request_id: string
+          reviewer_id: string
+          xp_earned?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          feedback?: string
+          id?: string
+          rating?: number | null
+          request_id?: string
+          reviewer_id?: string
+          xp_earned?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_responses_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "code_review_requests"
             referencedColumns: ["id"]
           },
         ]
