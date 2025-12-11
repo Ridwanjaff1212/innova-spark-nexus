@@ -20,6 +20,10 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { exportUserProgressReport } from "@/utils/pdfExport";
 import StudentAssignments from "@/components/StudentAssignments";
+import ContributionGraph from "@/components/ContributionGraph";
+import CodingStreak from "@/components/CodingStreak";
+import MysteryChallenge from "@/components/MysteryChallenge";
+import LiveActivityFeed from "@/components/LiveActivityFeed";
 
 interface Stats {
   totalProjects: number;
@@ -298,6 +302,18 @@ export default function Dashboard() {
           )}
         </motion.div>
       </div>
+
+      {/* Streak and Mystery Challenge Row */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        <CodingStreak />
+        <MysteryChallenge />
+      </div>
+
+      {/* Contribution Graph */}
+      <ContributionGraph />
+
+      {/* Live Activity Feed */}
+      <LiveActivityFeed />
 
       {/* Quick Actions */}
       <motion.div
