@@ -665,6 +665,42 @@ export type Database = {
         }
         Relationships: []
       }
+      pair_programming_rooms: {
+        Row: {
+          code_content: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          language: string | null
+          max_participants: number | null
+          name: string
+        }
+        Insert: {
+          code_content?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          language?: string | null
+          max_participants?: number | null
+          name: string
+        }
+        Update: {
+          code_content?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          language?: string | null
+          max_participants?: number | null
+          name?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -838,6 +874,44 @@ export type Database = {
             columns: ["request_id"]
             isOneToOne: false
             referencedRelation: "code_review_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      room_participants: {
+        Row: {
+          cursor_position: Json | null
+          id: string
+          is_host: boolean | null
+          joined_at: string
+          room_id: string
+          user_id: string
+          username: string
+        }
+        Insert: {
+          cursor_position?: Json | null
+          id?: string
+          is_host?: boolean | null
+          joined_at?: string
+          room_id: string
+          user_id: string
+          username: string
+        }
+        Update: {
+          cursor_position?: Json | null
+          id?: string
+          is_host?: boolean | null
+          joined_at?: string
+          room_id?: string
+          user_id?: string
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_participants_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "pair_programming_rooms"
             referencedColumns: ["id"]
           },
         ]

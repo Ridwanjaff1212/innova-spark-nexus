@@ -20,6 +20,7 @@ import AIAssistant from "./pages/AIAssistant";
 import CodeAssistant from "./pages/CodeAssistant";
 import CodeHub from "./pages/CodeHub";
 import CodeBattle from "./pages/CodeBattle";
+import PairProgramming from "./pages/PairProgramming";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -53,6 +54,7 @@ const App = () => {
                 <Route path="/assistant" element={<AIAssistant />} />
                 <Route path="/code-assistant" element={<CodeAssistant />} />
                 <Route path="/code-battle" element={<CodeBattle />} />
+                <Route path="/pair-programming" element={<PairProgramming />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
