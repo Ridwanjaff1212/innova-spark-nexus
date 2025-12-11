@@ -9,12 +9,12 @@ import {
   Shield, Users, FolderKanban, Calendar, CheckCircle, Star, Plus, Trash2, Download, 
   FileText, TrendingUp, Award, Zap, BarChart3, RefreshCw, Eye, Clock, Activity,
   UserCheck, Settings, Database, Bell, Search, Layers, ArrowUpRight, Send, Target,
-  AlertCircle, GraduationCap, Mail, Hash, Edit2, ChevronDown, ChevronUp, Globe, Terminal, Braces, Copy
+  AlertCircle, GraduationCap, Mail, Hash, Edit2, ChevronDown, ChevronUp, Globe, Terminal, Braces, Copy, Gift, Sparkles
 } from "lucide-react";
 import { exportMembersReport, exportProjectsReport } from "@/utils/pdfExport";
 import { getVisitorStats } from "@/hooks/useVisitorTracking";
 
-type TabType = "overview" | "projects" | "members" | "assignments" | "announcements" | "analytics" | "gallery" | "codehub" | "system";
+type TabType = "overview" | "projects" | "members" | "assignments" | "announcements" | "analytics" | "gallery" | "codehub" | "challenges" | "system";
 
 interface Assignment {
   id: string;
@@ -57,6 +57,10 @@ export default function Admin() {
   const [galleryItems, setGalleryItems] = useState<any[]>([]);
   const [badges, setBadges] = useState<any[]>([]);
   const [codeSnippets, setCodeSnippets] = useState<any[]>([]);
+  const [mysteryChallenges, setMysteryChallenges] = useState<any[]>([]);
+  const [newChallenge, setNewChallenge] = useState({
+    title: "", description: "", challenge_type: "code", xp_reward: 50, time_limit_minutes: 30
+  });
 
   useEffect(() => { 
     fetchAllData();
@@ -74,13 +78,14 @@ export default function Admin() {
 
   const fetchAllData = async () => {
     setLoading(true);
-    const [projectsRes, membersRes, announcementsRes, assignmentsRes, badgesRes, snippetsRes] = await Promise.all([
+    const [projectsRes, membersRes, announcementsRes, assignmentsRes, badgesRes, snippetsRes, challengesRes] = await Promise.all([
       supabase.from("projects").select("*").order("created_at", { ascending: false }),
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("announcements").select("*").order("created_at", { ascending: false }),
       supabase.from("assignments").select("*").order("created_at", { ascending: false }),
       supabase.from("badges").select("*").order("created_at", { ascending: false }),
-      supabase.from("code_hub_snippets").select("*").order("created_at", { ascending: false })
+      supabase.from("code_hub_snippets").select("*").order("created_at", { ascending: false }),
+      supabase.from("mystery_challenges").select("*").order("created_at", { ascending: false })
     ]);
     setProjects(projectsRes.data || []);
     setMembers(membersRes.data || []);
@@ -88,7 +93,39 @@ export default function Admin() {
     setAssignments((assignmentsRes.data as Assignment[]) || []);
     setBadges(badgesRes.data || []);
     setCodeSnippets(snippetsRes.data || []);
+    setMysteryChallenges(challengesRes.data || []);
     setLoading(false);
+  };
+
+  const createMysteryChallenge = async () => {
+    if (!newChallenge.title) {
+      toast.error("Please enter a challenge title");
+      return;
+    }
+    
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24); // 24 hour challenge
+    
+    await supabase.from("mystery_challenges").insert({
+      ...newChallenge,
+      is_active: true,
+      expires_at: expiresAt.toISOString()
+    });
+    toast.success("Mystery challenge created! 🎉");
+    setNewChallenge({ title: "", description: "", challenge_type: "code", xp_reward: 50, time_limit_minutes: 30 });
+    fetchAllData();
+  };
+
+  const toggleChallengeActive = async (id: string, isActive: boolean) => {
+    await supabase.from("mystery_challenges").update({ is_active: !isActive }).eq("id", id);
+    toast.success(isActive ? "Challenge deactivated" : "Challenge activated");
+    fetchAllData();
+  };
+
+  const deleteChallenge = async (id: string) => {
+    await supabase.from("mystery_challenges").delete().eq("id", id);
+    toast.success("Challenge deleted");
+    fetchAllData();
   };
 
   const approveProject = async (id: string) => { 
