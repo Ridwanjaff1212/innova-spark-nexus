@@ -202,6 +202,92 @@ export type Database = {
         }
         Relationships: []
       }
+      battle_leaderboard: {
+        Row: {
+          average_time_seconds: number | null
+          battles_played: number | null
+          battles_won: number | null
+          best_streak: number | null
+          id: string
+          total_score: number | null
+          updated_at: string
+          user_id: string
+          username: string
+          win_streak: number | null
+        }
+        Insert: {
+          average_time_seconds?: number | null
+          battles_played?: number | null
+          battles_won?: number | null
+          best_streak?: number | null
+          id?: string
+          total_score?: number | null
+          updated_at?: string
+          user_id: string
+          username: string
+          win_streak?: number | null
+        }
+        Update: {
+          average_time_seconds?: number | null
+          battles_played?: number | null
+          battles_won?: number | null
+          best_streak?: number | null
+          id?: string
+          total_score?: number | null
+          updated_at?: string
+          user_id?: string
+          username?: string
+          win_streak?: number | null
+        }
+        Relationships: []
+      }
+      battle_participants: {
+        Row: {
+          battle_id: string
+          id: string
+          is_correct: boolean | null
+          joined_at: string
+          score: number | null
+          status: string | null
+          submission_code: string | null
+          submission_time: string | null
+          user_id: string
+          username: string
+        }
+        Insert: {
+          battle_id: string
+          id?: string
+          is_correct?: boolean | null
+          joined_at?: string
+          score?: number | null
+          status?: string | null
+          submission_code?: string | null
+          submission_time?: string | null
+          user_id: string
+          username: string
+        }
+        Update: {
+          battle_id?: string
+          id?: string
+          is_correct?: boolean | null
+          joined_at?: string
+          score?: number | null
+          status?: string | null
+          submission_code?: string | null
+          submission_time?: string | null
+          user_id?: string
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "battle_participants_battle_id_fkey"
+            columns: ["battle_id"]
+            isOneToOne: false
+            referencedRelation: "code_battles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       challenge_completions: {
         Row: {
           challenge_id: string
@@ -261,6 +347,60 @@ export type Database = {
           id?: string
           title?: string
           xp_reward?: number | null
+        }
+        Relationships: []
+      }
+      code_battles: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          difficulty: string | null
+          ended_at: string | null
+          id: string
+          max_participants: number | null
+          problem_statement: string
+          started_at: string | null
+          starter_code: string | null
+          status: string | null
+          test_cases: Json | null
+          time_limit_seconds: number | null
+          title: string
+          winner_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          difficulty?: string | null
+          ended_at?: string | null
+          id?: string
+          max_participants?: number | null
+          problem_statement: string
+          started_at?: string | null
+          starter_code?: string | null
+          status?: string | null
+          test_cases?: Json | null
+          time_limit_seconds?: number | null
+          title: string
+          winner_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          difficulty?: string | null
+          ended_at?: string | null
+          id?: string
+          max_participants?: number | null
+          problem_statement?: string
+          started_at?: string | null
+          starter_code?: string | null
+          status?: string | null
+          test_cases?: Json | null
+          time_limit_seconds?: number | null
+          title?: string
+          winner_id?: string | null
         }
         Relationships: []
       }
