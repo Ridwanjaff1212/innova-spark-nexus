@@ -11,7 +11,8 @@ import {
   Bot,
   Sparkles,
   Terminal,
-  Swords
+  Swords,
+  MonitorPlay
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,7 @@ const navItems = [
   { to: "/creative-hub", icon: Lightbulb, label: "Creative Hub" },
   { to: "/code-hub", icon: Terminal, label: "Code Hub" },
   { to: "/code-battle", icon: Swords, label: "Code Battle" },
+  { to: "/pair-programming", icon: MonitorPlay, label: "Pair Programming" },
   { to: "/teams", icon: Users, label: "Teams" },
   { to: "/achievements", icon: Trophy, label: "Achievements" },
   { to: "/events", icon: Calendar, label: "Events" },
