@@ -701,6 +701,51 @@ export type Database = {
         }
         Relationships: []
       }
+      portfolios: {
+        Row: {
+          bio: string | null
+          created_at: string | null
+          custom_css: string | null
+          id: string
+          is_public: boolean | null
+          slug: string
+          social_links: Json | null
+          theme: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+          views_count: number | null
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string | null
+          custom_css?: string | null
+          id?: string
+          is_public?: boolean | null
+          slug: string
+          social_links?: Json | null
+          theme?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+          views_count?: number | null
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string | null
+          custom_css?: string | null
+          id?: string
+          is_public?: boolean | null
+          slug?: string
+          social_links?: Json | null
+          theme?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+          views_count?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -916,6 +961,56 @@ export type Database = {
           },
         ]
       }
+      seasonal_events: {
+        Row: {
+          badge_reward_id: string | null
+          created_at: string | null
+          description: string | null
+          end_date: string
+          id: string
+          is_active: boolean | null
+          name: string
+          special_challenges: Json | null
+          start_date: string
+          theme: string
+          xp_multiplier: number | null
+        }
+        Insert: {
+          badge_reward_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          end_date: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          special_challenges?: Json | null
+          start_date: string
+          theme?: string
+          xp_multiplier?: number | null
+        }
+        Update: {
+          badge_reward_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          end_date?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          special_challenges?: Json | null
+          start_date?: string
+          theme?: string
+          xp_multiplier?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seasonal_events_badge_reward_id_fkey"
+            columns: ["badge_reward_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_members: {
         Row: {
           id: string
@@ -1097,6 +1192,36 @@ export type Database = {
           page_visited?: string | null
           user_agent?: string | null
           visitor_id?: string
+        }
+        Relationships: []
+      }
+      webrtc_signals: {
+        Row: {
+          created_at: string | null
+          from_user_id: string
+          id: string
+          room_id: string
+          signal_data: Json
+          signal_type: string
+          to_user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          from_user_id: string
+          id?: string
+          room_id: string
+          signal_data: Json
+          signal_type: string
+          to_user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          from_user_id?: string
+          id?: string
+          room_id?: string
+          signal_data?: Json
+          signal_type?: string
+          to_user_id?: string
         }
         Relationships: []
       }

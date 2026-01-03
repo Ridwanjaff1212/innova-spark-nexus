@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar, Clock, Trophy } from "lucide-react";
+import SeasonalEvents from "@/components/SeasonalEvents";
 
 interface Announcement { id: string; title: string; content: string; event_date: string | null; is_competition: boolean | null; created_at: string; }
 
@@ -31,8 +32,12 @@ export default function Events() {
         <p className="text-muted-foreground mt-2">Stay updated with club activities</p>
       </motion.div>
 
+      {/* Seasonal Events Section */}
+      <SeasonalEvents />
+
       {announcements.length > 0 ? (
         <div className="space-y-4">
+          <h2 className="text-xl font-display font-semibold">Upcoming Events</h2>
           {announcements.map((event, index) => (
             <motion.div key={event.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.1 }} className={`glass-card p-6 hover-lift ${event.is_competition ? "border-l-4 border-l-secondary" : "border-l-4 border-l-primary"}`}>
               <div className="flex items-start justify-between">
