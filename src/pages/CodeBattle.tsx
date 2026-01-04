@@ -318,15 +318,20 @@ export default function CodeBattle() {
         className="flex items-center justify-between"
       >
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center">
+          <motion.div 
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 200 }}
+            className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center shadow-lg"
+          >
             <Swords className="w-7 h-7 text-white" />
-          </div>
+          </motion.div>
           <div>
-            <h1 className="text-3xl font-display font-bold">Code Battle Arena</h1>
-            <p className="text-muted-foreground">Compete in real-time coding challenges</p>
+            <h1 className="text-3xl font-display font-bold gradient-text">Code Battle Arena</h1>
+            <p className="text-muted-foreground">Compete in real-time coding challenges ⚔️</p>
           </div>
         </div>
-        <Button onClick={() => setShowCreateModal(true)} variant="gradient">
+        <Button onClick={() => setShowCreateModal(true)} variant="gradient" className="shadow-lg">
           <Plus className="w-4 h-4 mr-2" />
           Create Battle
         </Button>

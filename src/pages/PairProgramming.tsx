@@ -11,7 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   Users, Plus, Video, VideoOff, Mic, MicOff, 
-  Code, Copy, LogOut, Monitor, Settings, Phone
+  Code, Copy, LogOut, Monitor, Settings, Phone, MonitorPlay
 } from 'lucide-react';
 
 interface Room {
@@ -413,8 +413,13 @@ const PairProgramming = () => {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <h1 className="text-4xl font-bold mb-2">Pair Programming</h1>
-          <p className="text-muted-foreground">Code together in real-time with video chat</p>
+          <div className="flex items-center justify-center gap-3 mb-3">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+              <MonitorPlay className="w-7 h-7 text-white" />
+            </div>
+          </div>
+          <h1 className="text-4xl font-display font-bold gradient-text mb-2">Pair Programming</h1>
+          <p className="text-muted-foreground">Code together in real-time with video chat 🎥</p>
         </motion.div>
 
         <div className="flex justify-end mb-6">

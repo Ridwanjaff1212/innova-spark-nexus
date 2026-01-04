@@ -60,26 +60,40 @@ export default function MainLayout() {
       <Sidebar />
       
       {/* Top bar with notifications */}
-      <div className="fixed top-0 right-0 left-64 h-16 bg-background/80 backdrop-blur-lg border-b border-border/50 z-40 flex items-center justify-between px-6">
+      <div className="fixed top-0 right-0 left-64 h-16 bg-background/90 backdrop-blur-xl border-b border-border/50 z-40 flex items-center justify-between px-6 shadow-sm">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="flex items-center gap-2"
+          className="flex items-center gap-3"
         >
-          <span className="text-2xl">👋</span>
-          <span className="text-muted-foreground">Welcome back,</span>
-          <span className="font-display font-semibold gradient-text">{profile?.full_name || "Innovator"}</span>
+          <motion.span 
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", delay: 0.2 }}
+            className="text-2xl"
+          >
+            👋
+          </motion.span>
+          <div>
+            <span className="text-sm text-muted-foreground">Welcome back,</span>
+            <span className="font-display font-semibold gradient-text ml-1.5">{profile?.full_name || "Innovator"}</span>
+          </div>
         </motion.div>
         
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="flex items-center gap-4"
+          className="flex items-center gap-3"
         >
           {profile?.technovista_id && (
-            <div className="text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-full font-medium">
+            <motion.div 
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="text-xs bg-gradient-to-r from-primary/20 to-primary/10 text-primary px-3 py-1.5 rounded-full font-medium border border-primary/20"
+            >
               🆔 {profile.technovista_id}
-            </div>
+            </motion.div>
           )}
           <ThemeToggle />
           <NotificationBell />

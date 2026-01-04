@@ -20,17 +20,17 @@ import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/projects", icon: FolderKanban, label: "Projects" },
-  { to: "/creative-hub", icon: Lightbulb, label: "Creative Hub" },
-  { to: "/code-hub", icon: Terminal, label: "Code Hub" },
-  { to: "/code-battle", icon: Swords, label: "Code Battle" },
-  { to: "/pair-programming", icon: MonitorPlay, label: "Pair Programming" },
-  { to: "/code-visualizer", icon: Eye, label: "Code Visualizer" },
-  { to: "/portfolio", icon: Briefcase, label: "Portfolio" },
-  { to: "/teams", icon: Users, label: "Teams" },
-  { to: "/achievements", icon: Trophy, label: "Achievements" },
-  { to: "/events", icon: Calendar, label: "Events" },
+  { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard", emoji: "🏠" },
+  { to: "/projects", icon: FolderKanban, label: "Projects", emoji: "📁" },
+  { to: "/creative-hub", icon: Lightbulb, label: "Creative Hub", emoji: "💡" },
+  { to: "/code-hub", icon: Terminal, label: "Code Hub", emoji: "💻" },
+  { to: "/code-battle", icon: Swords, label: "Code Battle", emoji: "⚔️" },
+  { to: "/pair-programming", icon: MonitorPlay, label: "Pair Code", emoji: "👥" },
+  { to: "/code-visualizer", icon: Eye, label: "Visualizer", emoji: "👁️" },
+  { to: "/portfolio", icon: Briefcase, label: "Portfolio", emoji: "🎨" },
+  { to: "/teams", icon: Users, label: "Teams", emoji: "🤝" },
+  { to: "/achievements", icon: Trophy, label: "Achievements", emoji: "🏆" },
+  { to: "/events", icon: Calendar, label: "Events", emoji: "📅" },
 ];
 
 export default function Sidebar() {
@@ -88,40 +88,52 @@ export default function Sidebar() {
       )}
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => (
-          <NavLink
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto scrollbar-thin">
+        {navItems.map((item, index) => (
+          <motion.div
             key={item.to}
-            to={item.to}
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300",
-                isActive
-                  ? "bg-primary/20 text-primary border border-primary/30"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-              )
-            }
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: index * 0.03 }}
           >
-            <item.icon className="w-5 h-5" />
-            <span className="font-medium">{item.label}</span>
-          </NavLink>
+            <NavLink
+              to={item.to}
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 group",
+                  isActive
+                    ? "bg-primary/20 text-primary border border-primary/30 shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                )
+              }
+            >
+              <span className="text-base group-hover:scale-110 transition-transform">{item.emoji}</span>
+              <span className="font-medium text-sm">{item.label}</span>
+            </NavLink>
+          </motion.div>
         ))}
 
         {isAdmin && (
-          <NavLink
-            to="/admin"
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 border border-secondary/30",
-                isActive
-                  ? "bg-secondary/20 text-secondary"
-                  : "text-secondary/70 hover:text-secondary hover:bg-secondary/10"
-              )
-            }
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.35 }}
           >
-            <Trophy className="w-5 h-5" />
-            <span className="font-medium">Admin Portal</span>
-          </NavLink>
+            <NavLink
+              to="/admin"
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 border border-secondary/30 mt-2",
+                  isActive
+                    ? "bg-secondary/20 text-secondary shadow-sm"
+                    : "text-secondary/70 hover:text-secondary hover:bg-secondary/10"
+                )
+              }
+            >
+              <span className="text-base">👑</span>
+              <span className="font-medium text-sm">Admin Portal</span>
+            </NavLink>
+          </motion.div>
         )}
       </nav>
 

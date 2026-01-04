@@ -331,12 +331,17 @@ export default function CodeVisualizer() {
         className="flex items-center justify-between"
       >
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+          <motion.div 
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 200 }}
+            className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg"
+          >
             <Eye className="w-7 h-7 text-white" />
-          </div>
+          </motion.div>
           <div>
-            <h1 className="text-3xl font-display font-bold">Code Visualizer</h1>
-            <p className="text-muted-foreground">Watch algorithms execute step-by-step</p>
+            <h1 className="text-3xl font-display font-bold gradient-text">Code Visualizer</h1>
+            <p className="text-muted-foreground">Watch algorithms execute step-by-step 🔍</p>
           </div>
         </div>
       </motion.div>
