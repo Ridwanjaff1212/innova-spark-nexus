@@ -142,8 +142,8 @@ export default function LoadingScreen({ onComplete, minDuration = 2500 }: Loadin
               transition={{ duration: 0.1 }}
             />
           </div>
-          <p className="text-xs text-muted-foreground mt-2 text-center">
-            {progress < 100 ? "Loading..." : "Welcome!"}
+          <p className="text-xs text-muted-foreground mt-2 text-center font-medium">
+            {progress < 100 ? `Initializing... ${progress}%` : "Welcome! ✨"}
           </p>
         </motion.div>
 
