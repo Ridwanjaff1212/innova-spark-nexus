@@ -22,6 +22,7 @@ import CodeHub from "./pages/CodeHub";
 import CodeBattle from "./pages/CodeBattle";
 import PairProgramming from "./pages/PairProgramming";
 import Portfolio from "./pages/Portfolio";
+import PublicPortfolio from "./pages/PublicPortfolio";
 import CodeVisualizer from "./pages/CodeVisualizer";
 import NotFound from "./pages/NotFound";
 
@@ -43,6 +44,9 @@ const App = () => {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Auth />} />
+              {/* Public share routes */}
+              <Route path="/p/:slug" element={<PublicPortfolio />} />
+
               <Route element={<MainLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/projects" element={<Projects />} />
@@ -56,7 +60,7 @@ const App = () => {
                 <Route path="/assistant" element={<AIAssistant />} />
                 <Route path="/code-assistant" element={<CodeAssistant />} />
                 <Route path="/code-battle" element={<CodeBattle />} />
-              <Route path="/pair-programming" element={<PairProgramming />} />
+                <Route path="/pair-programming" element={<PairProgramming />} />
                 <Route path="/portfolio" element={<Portfolio />} />
                 <Route path="/code-visualizer" element={<CodeVisualizer />} />
               </Route>
