@@ -62,8 +62,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    const clearAuthStorage = () => {
+      try {
+        // Supabase stores the session in localStorage under a key like: sb-<project-ref>-auth-token
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const key = localStorage.key(i);
+          if (!key) continue;
+          if (key.startsWith("sb-") && key.endsWith("-auth-token")) {
+            localStorage.removeItem(key);
+          }
+        }
+      } catch {
+        // ignore
+      }
+    };
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
+        // If the stored refresh token is invalid (common in previews), force a clean sign-out.
+        if ((event as unknown as string) === "TOKEN_REFRESH_FAILED") {
+          clearAuthStorage();
+          try {
+            await supabase.auth.signOut();
+          } catch {
+            // ignore
+          }
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          setIsAdmin(false);
+          return;
+        }
+
         setSession(session);
         setUser(session?.user ?? null);
 
@@ -79,7 +109,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
+      if (error) {
+        clearAuthStorage();
+        try {
+          await supabase.auth.signOut();
+        } catch {
+          // ignore
+        }
+        setSession(null);
+        setUser(null);
+        setProfile(null);
+        setIsAdmin(false);
+        setLoading(false);
+        return;
+      }
+
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
