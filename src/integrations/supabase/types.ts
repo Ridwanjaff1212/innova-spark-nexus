@@ -755,6 +755,7 @@ export type Database = {
           full_name: string
           grade: string | null
           id: string
+          is_active: boolean | null
           level: number | null
           section: string | null
           technovista_id: string | null
@@ -770,6 +771,7 @@ export type Database = {
           full_name: string
           grade?: string | null
           id?: string
+          is_active?: boolean | null
           level?: number | null
           section?: string | null
           technovista_id?: string | null
@@ -785,6 +787,7 @@ export type Database = {
           full_name?: string
           grade?: string | null
           id?: string
+          is_active?: boolean | null
           level?: number | null
           section?: string | null
           technovista_id?: string | null
