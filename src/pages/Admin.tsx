@@ -9,7 +9,7 @@ import {
   Shield, Users, FolderKanban, Calendar, CheckCircle, Star, Plus, Trash2, Download, 
   FileText, TrendingUp, Award, Zap, BarChart3, RefreshCw, Eye, Clock, Activity,
   UserCheck, Settings, Database, Bell, Search, Layers, ArrowUpRight, Send, Target,
-  AlertCircle, GraduationCap, Mail, Hash, Edit2, ChevronDown, ChevronUp, Globe, Terminal, Braces, Copy, Gift, Sparkles
+  AlertCircle, GraduationCap, Mail, Hash, Edit2, ChevronDown, ChevronUp, Globe, Terminal, Braces, Copy, Gift, Sparkles, UserX, ShieldOff, ShieldCheck
 } from "lucide-react";
 import { exportMembersReport, exportProjectsReport } from "@/utils/pdfExport";
 import { getVisitorStats } from "@/hooks/useVisitorTracking";
@@ -295,6 +295,25 @@ export default function Admin() {
       level: 1 
     }).eq("user_id", userId);
     toast.success("Member progress reset");
+    fetchAllData();
+  };
+
+  const toggleMemberAccess = async (userId: string, currentStatus: boolean, memberName: string) => {
+    const newStatus = !currentStatus;
+    const { error } = await supabase.from("profiles").update({ 
+      is_active: newStatus 
+    }).eq("user_id", userId);
+    
+    if (error) {
+      toast.error("Failed to update access");
+      return;
+    }
+    
+    if (newStatus) {
+      toast.success(`Access restored for ${memberName} ✅`);
+    } else {
+      toast.success(`Access removed for ${memberName} 🚫`);
+    }
     fetchAllData();
   };
 
@@ -802,22 +821,31 @@ export default function Admin() {
                     const isExpanded = expandedMember === m.id;
                     
                     return (
-                      <div key={m.id} className="bg-card border border-border rounded-xl overflow-hidden">
+                      <div key={m.id} className={`bg-card border rounded-xl overflow-hidden ${m.is_active === false ? 'border-red-300 dark:border-red-800 opacity-75' : 'border-border'}`}>
                         <div 
                           className="p-4 cursor-pointer hover:bg-muted/30 transition-colors"
                           onClick={() => setExpandedMember(isExpanded ? null : m.id)}
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center border-2 border-primary/20">
-                                <span className="text-lg font-semibold text-primary">
+                              <div className={`w-12 h-12 rounded-full flex items-center justify-center border-2 ${
+                                m.is_active === false 
+                                  ? 'bg-red-100 dark:bg-red-900/20 border-red-300 dark:border-red-700' 
+                                  : 'bg-gradient-to-br from-primary/20 to-primary/10 border-primary/20'
+                              }`}>
+                                <span className={`text-lg font-semibold ${m.is_active === false ? 'text-red-600 dark:text-red-400' : 'text-primary'}`}>
                                   {m.full_name?.charAt(0) || "?"}
                                 </span>
                               </div>
                               <div>
                                 <h4 className="font-semibold flex items-center gap-2">
                                   {m.full_name}
-                                  {(m.xp_points || 0) >= 500 && (
+                                  {m.is_active === false && (
+                                    <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 flex items-center gap-1">
+                                      <ShieldOff className="w-3 h-3" /> Disabled
+                                    </span>
+                                  )}
+                                  {(m.xp_points || 0) >= 500 && m.is_active !== false && (
                                     <Award className="w-4 h-4 text-amber-500" />
                                   )}
                                 </h4>
@@ -917,6 +945,20 @@ export default function Admin() {
                                       <span className="text-muted-foreground">User ID</span>
                                       <code className="text-xs bg-muted px-1 rounded">{m.user_id?.slice(0, 8)}...</code>
                                     </div>
+                                    <div className="flex justify-between items-center p-2 bg-background rounded-lg">
+                                      <span className="text-muted-foreground">Account Status</span>
+                                      <span className={`flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${
+                                        m.is_active !== false 
+                                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" 
+                                          : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                      }`}>
+                                        {m.is_active !== false ? (
+                                          <><ShieldCheck className="w-3 h-3" /> Active</>
+                                        ) : (
+                                          <><ShieldOff className="w-3 h-3" /> Disabled</>
+                                        )}
+                                      </span>
+                                    </div>
                                     <div className="pt-3 space-y-2">
                                       <div className="flex gap-2">
                                         <Button 
@@ -938,8 +980,25 @@ export default function Admin() {
                                       </div>
                                       <Button 
                                         size="sm" 
-                                        variant="destructive" 
+                                        variant={m.is_active !== false ? "destructive" : "default"}
                                         className="w-full"
+                                        onClick={() => {
+                                          const action = m.is_active !== false ? "remove access for" : "restore access for";
+                                          if (confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} ${m.full_name}?`)) {
+                                            toggleMemberAccess(m.user_id, m.is_active !== false, m.full_name);
+                                          }
+                                        }}
+                                      >
+                                        {m.is_active !== false ? (
+                                          <><UserX className="w-3 h-3 mr-1" /> Remove Access</>
+                                        ) : (
+                                          <><UserCheck className="w-3 h-3 mr-1" /> Restore Access</>
+                                        )}
+                                      </Button>
+                                      <Button 
+                                        size="sm" 
+                                        variant="outline" 
+                                        className="w-full text-muted-foreground"
                                         onClick={() => {
                                           if (confirm(`Reset ${m.full_name}'s progress?`)) {
                                             resetMemberProgress(m.user_id);
